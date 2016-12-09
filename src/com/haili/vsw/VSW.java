@@ -83,7 +83,7 @@ public class VSW {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		T.printBFS();
+
 	}
 	
 }

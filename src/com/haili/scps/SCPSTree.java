@@ -7,9 +7,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class SCPSTree {
 
@@ -34,7 +31,7 @@ public class SCPSTree {
 			this.currentWindowSize++;
 			insertPath(transaction, checkPoint); // 排序好的事务插入到SCPS树中
 		}
-		updateIList(pane); // 2 更新i-list
+//		updateIList(pane); // 2 更新i-list
 		reconstruct(); // 根据最新I-list重构SCPS-tree
 	}
 	
@@ -113,13 +110,6 @@ public class SCPSTree {
 	 */
 	public void sortTransaction(List<String> transaction) {
 		
-		// 删除非频繁项
-		// TODO
-		for (String item : transaction) {
-			
-		}
-		
-		
 		Collections.sort(transaction, new Comparator<String>(){
 			
 			@Override
@@ -157,6 +147,7 @@ public class SCPSTree {
 	 * 根据BSM策重构整树的结构
 	 */
 	public void reconstruct() {
+		printBFS(root);
 		System.out.println("reconstructing...");
 	}
 	
@@ -171,8 +162,7 @@ public class SCPSTree {
 	 * 打印树
 	 * 广度优先
 	 */
-
-	public void travelBFS(SCPSNode root) {
+	public void printBFS(SCPSNode root) {
 		
 		LinkedList<SCPSNode> queue = new LinkedList<>();
 		queue.add(root);
@@ -259,13 +249,13 @@ public class SCPSTree {
 				if (s.equals("")) {
 					System.out.print("                    ");
 				} else if (s.equals("|")) {
-					System.out.print("          │         ");
+					System.out.print("            │       ");
 				} else if (s.equals("-")) {
 					System.out.print("────────────────────");
 				} else if (s.equals("+")) {
-					System.out.print("──────────┬─────────");
+					System.out.print("────────────┬───────");
 				} else if (s.equals("^")) {
-					System.out.print("──────────┐         ");
+					System.out.print("────────────┐       ");
 				} else {
 					System.out.print("    " + s);
 				}
@@ -306,7 +296,6 @@ public class SCPSTree {
 	 * 打印树
 	 * 深度优先遍历
 	 */
-	private List<List<String>> DFSList = new ArrayList<>();
 	public void travelDFS(SCPSNode node) {
 		
 		if (node.getN() != null) {
@@ -322,7 +311,7 @@ public class SCPSTree {
 					row.add(temp.toString());
 					temp = temp.getParent();
 				}
-				DFSList.add(row);
+				
 			}
 			
 		}
@@ -333,36 +322,6 @@ public class SCPSTree {
 		
 	}
 	
-	public void printBFS() {
-		travelBFS(root);
-	}
-	
-	/***
-	 * 生成重复字符串
-	 * @param str
-	 * @param time
-	 * @return
-	 */
-	public String repeat(String str, int time) {
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < time; i++) {
-			sb.append(str);
-		}
-		return sb.toString();
-	}
-	
-	public void printDFS() {
-		travelDFS(root);
-		for (int i = 0; i < DFSList.size(); i++) {
-			
-			List<String> row = DFSList.get(i);
-			for (int j = row.size() - 1; j >= 0; j--) {
-				String item = row.get(j);
-				System.out.print(item + " ");
-			}
-			System.out.println();
-		}
-	}
 
 	/******************** getters and setters *******************/
 	public Map<String, Integer> getIList() {
