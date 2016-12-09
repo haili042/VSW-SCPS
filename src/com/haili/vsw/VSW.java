@@ -29,7 +29,7 @@ public class VSW {
 	}
 	
 	public static void main(String[] args) {
-		VSW vsw = new VSW(6, 6);
+		VSW vsw = new VSW(21, 21);
 		vsw.run();
 	}
 	

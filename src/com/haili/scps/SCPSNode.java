@@ -18,7 +18,7 @@ public class SCPSNode {
 	
 
 	public SCPSNode() {
-
+		this.N = "root";
 	}
 
 	public SCPSNode(String N) {
@@ -39,13 +39,13 @@ public class SCPSNode {
 	@Override
 	public String toString() {
 		String res = "";
-		if (this.getN() == null) {
-			res = String.format("[     root     ]");
+		if (this.getN().equals("root")) {
+			res = String.format("[=====root=====]");
 		} else if (this.isTailNode()) {
 			// ©³©×©·©Ï©ï©Ç©»©ß©¿©³©¥©·©§©¿©¥©»©§©°©Ð©´©È©¼©Ø©¸©À©à
 			res = String.format("[%2s, %2d, %2d, %2d]", this.getN(), this.getC(), this.getPTC(), this.getCTC());
 		} else {
-			res = String.format("[%2s, %2d        ]", this.getN(), this.getC());
+			res = String.format("[%2s, %2d, --, --]", this.getN(), this.getC());
 		}
 		
 		return res;

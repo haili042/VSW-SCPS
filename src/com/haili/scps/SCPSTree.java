@@ -1,5 +1,6 @@
 package com.haili.scps;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -15,6 +16,7 @@ public class SCPSTree {
 	private SCPSNode root = new SCPSNode();
 	private int currentWindowSize = 0; // 当前窗口大小
 	private double minSup; // 最小支持度
+    
 
 	public SCPSTree() {}
 	
@@ -170,17 +172,35 @@ public class SCPSTree {
 		int currentLevelSize = 1; // 本层节点个数， 打印输出用
 		
 		SCPSNode lastNode = null; // 同层上一个访问节点， 打印输出用
-		List<List<String>> resultList = new ArrayList<>();
-		List<String> row = new ArrayList<>();
+		List<List<SCPSNode>> resultList = new ArrayList<>();
+		List<SCPSNode> row = new ArrayList<>();
 		
 		while (!queue.isEmpty()) {
 			SCPSNode temp = queue.poll();
 			LinkedList<SCPSNode> children = temp.getChildren();
 			
-			for (int i = 0; i < getMaxWidth(lastNode) - currentLevelSize; i++) {
-				row.add(""); // 占位
+			for (int i = 0; i < getPathSize(lastNode) - 1; i++) {
+				row.add(null); // 占位
 			}
-			row.add(temp.toString());
+			
+			if (resultList.size() > 0) {
+				List<SCPSNode> lastRow = resultList.get(resultList.size() - 1); // 上一层
+				int pos = 0;
+				for (int i = 0; i < lastRow.size(); i++) {
+					// 对应上父节点
+					if (temp.getParent().equals(lastRow.get(i))) {
+						pos = i;
+					}
+				}
+				// 对应上父节点
+				if ((pos - row.size()) > 0) {
+					for (int i = 0; i <= pos - row.size(); i++) {
+						row.add(null); // 占位
+					}
+				}
+			}
+			
+			row.add(temp);
 			
 			nextLevelSize += temp.getChildren().size();
 			lastNode = temp;
@@ -193,12 +213,12 @@ public class SCPSTree {
 				currentLevelSize = nextLevelSize;
 				nextLevelSize = 0;
 				lastNode = null;
-				List<String> emptyRow = new ArrayList<>(); // 空行来画线
-				for (String s : row) {
-					if (!"".equals(s)) {
-						emptyRow.add("|");
+				List<SCPSNode> emptyRow = new ArrayList<>(); // 空行来画线
+				for (SCPSNode n : row) {
+					if (n != null) {
+						emptyRow.add(new SCPSNode("|"));
 					} else {
-						emptyRow.add(s);
+						emptyRow.add(n);
 					}
 				}
 				resultList.add(emptyRow);
@@ -210,25 +230,24 @@ public class SCPSTree {
 		
 		
 		for (int i = 1; i < resultList.size() - 1; i += 2) {
-			List<String> line = resultList.get(i);
-			List<String> nextLine = resultList.get(i + 1);
+			List<SCPSNode> line = resultList.get(i);
+			List<SCPSNode> nextLine = resultList.get(i + 1);
 			// 横线
 			for (int j = 0; j < nextLine.size(); j++) {
-				String s = nextLine.get(j);
+				SCPSNode n = nextLine.get(j);
 				if (line.size() < j + 1) {
-					line.add("");
+					line.add(null);
 				}
-				if (s.equals("|") && line.get(j).equals("")) {
-					// 如果是横线且没有对应的上面的元素和其连接，则设置为横线
-					line.set(j, "^");
+				if (n != null && n.getN().equals("|") && line.get(j) == null) {
+					// 如果是横线且没有对应的上面的元素和其连接，则设置为竖线
+					line.set(j, new SCPSNode("^"));
 					
 					// 处理线相交
 					for (int k = j - 1; k >= 0; k--) {
-						
-						if (line.get(k).equals("")) {
-							line.set(k, "-");
-						} else if (line.get(k).equals("^")) {
-							line.set(k, "+");
+						if (line.get(k) == null) {
+							line.set(k, new SCPSNode("-"));
+						} else if (line.get(k).getN().equals("^")) {
+							line.set(k, new SCPSNode("+"));
 						} else {
 							break;
 						}
@@ -241,23 +260,27 @@ public class SCPSTree {
 		}
 		
 		for (int i = 1; i < resultList.size(); i++) {
-			List<String> line = resultList.get(i);
+			List<SCPSNode> line = resultList.get(i);
 			
 			// 打印
 			for (int j = 0; j < line.size(); j++) {
-				String s = line.get(j);
-				if (s.equals("")) {
-					System.out.print("                    ");
-				} else if (s.equals("|")) {
-					System.out.print("            │       ");
-				} else if (s.equals("-")) {
-					System.out.print("────────────────────");
-				} else if (s.equals("+")) {
-					System.out.print("────────────┬───────");
-				} else if (s.equals("^")) {
-					System.out.print("────────────┐       ");
+				SCPSNode sn = line.get(j);
+				if (sn != null) {
+					String s = sn.getN();
+					
+					if (s.equals("|")) {
+						System.out.print("            │       ");
+					} else if (s.equals("-")) {
+						System.out.print("────────────────────");
+					} else if (s.equals("+")) {
+						System.out.print("────────────┬───────");
+					} else if (s.equals("^")) {
+						System.out.print("────────────┐       ");
+					} else {
+						System.out.print("    " + sn.toString());
+					}
 				} else {
-					System.out.print("    " + s);
+					System.out.print("                    ");
 				}
 			}
 			System.out.println();
@@ -265,59 +288,30 @@ public class SCPSTree {
 	}
 	
 	/***
-	 * 求树的最大宽度
+	 * 求树有几条路径
 	 * 
 	 */
-    public static int getMaxWidth(SCPSNode root) {
-        if (root == null)
-            return 0;
-
-        LinkedList<SCPSNode> queue = new LinkedList<>();
-        int maxWitdth = 1; // 最大宽度
-        queue.add(root); // 入队
-
-        while (true) {
-            int len = queue.size(); // 当前层的节点个数
-            if (len == 0)
-                break;
-            while (len > 0) {// 如果当前层，还有节点
-            	SCPSNode t = queue.poll();
-                len--;
-                for (SCPSNode n : t.getChildren()) {
-                	queue.add(n); // 下一层节点入队
-				}
-            }
-            maxWitdth = Math.max(maxWitdth, queue.size());
-        }
-        return maxWitdth;
+    public int getPathSize(SCPSNode root) {
+    	List<SCPSNode> paths = new ArrayList<>();
+        travelDFS(paths, root);
+        return paths.size();
     }
 	
 	/***
 	 * 打印树
 	 * 深度优先遍历
 	 */
-	public void travelDFS(SCPSNode node) {
-		
-		if (node.getN() != null) {
-			
-			// 叶子节点
-			if (node.getChildren().size() == 0) {
-				
-				List<String> row = new ArrayList<>();
-				
-				// 从叶子节点到根节点的路径
-				SCPSNode temp = node;
-				while (temp.getN() != null) {
-					row.add(temp.toString());
-					temp = temp.getParent();
-				}
-				
-			}
-			
+	public void travelDFS(List<SCPSNode> paths, SCPSNode node) {
+		if (node == null) {
+			return;
 		}
-		
+			
+		// 叶子节点
+		if (node.getChildren().size() == 0) {
+			paths.add(node);
+		}
 		for (SCPSNode child : node.getChildren()) {
-			travelDFS(child);
+			travelDFS(paths, child);
 		}
 		
 	}
