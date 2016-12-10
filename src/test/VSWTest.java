@@ -1,7 +1,9 @@
 package test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.BeforeClass;
 
@@ -19,10 +21,36 @@ public class VSWTest {
 	}
 	public static void main(String[] args) {
 		List<String> l = new ArrayList<>();
-		l.add(0, "3");
-		l.add(0, "2");
-		l.add(0, "1");
-		System.out.println(l.toString());
+		l.add("b");
+		l.add("d");
+		
+		Map<String, Integer> IList = new HashMap<>();
+		IList.put("a", 3);
+		IList.put("b", 4);
+		IList.put("c", 3);
+		IList.put("d", 4);
+		
+		
+		System.out.println(isSorted(l, IList));
 	}
 
+	/**
+	 * 判断事务是否有序
+	 * @param transaction
+	 * @param IList
+	 * @return
+	 */
+	public static boolean isSorted(List<String> transaction, Map<String, Integer> IList) {
+		for (int i = 0; i < transaction.size() - 1; i++) {
+			String cur = transaction.get(i);
+			String next = transaction.get(i + 1);
+			
+			if (IList.get(cur) < IList.get(next)) {
+				return false;
+			} else if (IList.get(cur) == IList.get(next) && cur.compareTo(next) > 0) {
+				return false;
+			}
+		}
+		return true;
+	}
 }

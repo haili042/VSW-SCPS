@@ -5,20 +5,21 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import com.haili.scps.SCPSTree;
 import com.haili.util.ConfigReader;
-import com.haili.util.DataIO;
 
 public class VSW {
 	private int initSize;
 	private int paneSize;
 	private int CP; // 检查点
 	private SCPSTree T = new SCPSTree();
-	private List<List<String>> lastFPSet = new ArrayList<>();
+	private Set<String> lastFPSet = new HashSet<>();
 	
 	private String spliter = " ";
 	
@@ -33,6 +34,13 @@ public class VSW {
 		vsw.run();
 	}
 	
+	/**
+	 * 检测是否已经发生了概念改变
+	 */
+	public boolean isConceptChange(Set<String> curFPSet) {
+		
+		return false;
+	}
 	
 	/**
 	 * 读取数据流
@@ -80,9 +88,11 @@ public class VSW {
 				}
 
 			}
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		T.removeStaleWindow(T.getRoot());
 
 	}
 	

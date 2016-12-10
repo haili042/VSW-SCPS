@@ -34,7 +34,7 @@ public class SCPSTree {
 			insertPath(transaction, checkPoint); // 排序好的事务插入到SCPS树中
 		}
 		updateIList(pane); // 2 更新i-list
-		reconstruct(checkPoint); // 根据最新I-list重构SCPS-tree
+		reconstruct(); // 根据最新I-list重构SCPS-tree
 	}
 	
 	/**
@@ -172,15 +172,43 @@ public class SCPSTree {
 		});
 	}
 	
+	/**
+	 * 判断是否已经符合i-list顺序
+	 * @param transaction
+	 * @return
+	 */
+	public boolean isSorted(List<String> transaction) {
+		for (int i = 0; i < transaction.size() - 1; i++) {
+			String cur = transaction.get(i);
+			String next = transaction.get(i + 1);
+			if (IList.get(cur) < IList.get(next)) {
+				return false;
+			} else if (IList.get(cur) == IList.get(next) && cur.compareTo(next) > 0) {
+				return false;
+			}
+		}
+		return true;
+	}
 	
 	/**
 	 * 从树中删除路径, 从叶子节点开始
+	 * @param leaf
+	 * @param leafCount
+	 * @param update 是否是删除检查点之前数据时的删除操作
 	 */
-	public void removePath(SCPSNode leaf) {
+	public void removePath(SCPSNode leaf, int leafCount, boolean update) {
 		SCPSNode temp = leaf;
-		int leafCount = leaf.getC();
 		while (!temp.getN().equals("root")) {
 			temp.setC(temp.getC() - leafCount);
+			
+			// 更新 i-list
+			if (update) {
+				// 更新PTC和CTC的值
+				temp.setPTC(temp.getCTC());
+				temp.setCTC(0);
+				
+				IList.put(temp.getN(), IList.get(temp.getN()) - leafCount);
+			}
 			
 			// 若计数为0， 则删除该节点
 			if (temp.getC() == 0) {
@@ -190,22 +218,15 @@ public class SCPSTree {
 		}
 	}
 	
-	/**
-	 * 对路径进行排序
-	 * 
-	 */
-	public void sortPath() {
-		
-	}
 	
 	/**
 	 * 根据BSM策重构整树的结构
 	 */
-	public void reconstruct(int checkPoint) {
+	public void reconstruct() {
 		
-		printBFS(root);
+		print(root);
 	  	List<SCPSNode> leaves = new ArrayList<>();
-        travelDFS(leaves, root);
+        travelDFS(leaves, root, "leaves");
         
         for (SCPSNode leaf : leaves) {
 			
@@ -221,30 +242,43 @@ public class SCPSTree {
 				temp = temp.getParent();
 			}
 			
-			// 从树中删除一条路径
-			removePath(leaf);
-			printBFS(root);
+			// 如果有序就不用删除了
+			if (!isSorted(record)) {
+				// 从树中删除一条路径
+				removePath(leaf, leaf.getC(), false);
+				
+				// 排序后重新插入到树中， 此时与检查点无关
+				insertPath(record, lastC, lastPTC, lastCTC);
+			}
 			
-			// 排序后重新插入到树中， 此时与检查点无关
-			insertPath(record, lastC, lastPTC, lastCTC);
-			printBFS(root);
 		}
-		System.out.println("reconstructing...");
+		System.out.println("after reconstruction...");
+		print(root);
 		
 	}
 	
 	/**
 	 * 删除过期数据
 	 */
-	public void removeStaleWindow(SCPSNode root, int checkPoint) {
+	public void removeStaleWindow(SCPSNode root) {
+	  	List<SCPSNode> tailNodes = new ArrayList<>();
+        travelDFS(tailNodes, root, "tailNodes");
+        
+        for (SCPSNode leaf : tailNodes) {
+			// 从树中删除一条路径, 权值为该路径叶子节点的PTC值
+        	int ptc = leaf.getPTC();
+			removePath(leaf, ptc, true);
+		}
 		
+        reconstruct();
+
 	}
 	
 	/**
 	 * 打印树
 	 * 广度优先
 	 */
-	public void printBFS(SCPSNode root) {
+	public void print(SCPSNode root) {
 		
 		LinkedList<SCPSNode> queue = new LinkedList<>();
 		queue.add(root);
@@ -374,25 +408,31 @@ public class SCPSTree {
 	 */
     public int getPathSize(SCPSNode root) {
     	List<SCPSNode> leaves = new ArrayList<>();
-        travelDFS(leaves, root);
+        travelDFS(leaves, root, "leaves");
         return leaves.size();
     }
 	
 	/***
 	 * 深度优先遍历,
-	 * 获取叶子节点集合
+	 * 获取叶子或者尾节点集合
+	 * 
 	 */
-	public void travelDFS(List<SCPSNode> leaves, SCPSNode node) {
+	public void travelDFS(List<SCPSNode> result, SCPSNode node, String type) {
 		if (node == null) {
 			return;
 		}
 			
-		// 叶子节点
-		if (node.getChildren().size() == 0) {
-			leaves.add(node);
+		if (type.equals("leaves") && node.getChildren().size() == 0) {
+			// 叶子节点
+			result.add(node);
+		} else if (type.equals("tailNodes") && node.isTailNode()) {
+			// 尾节点
+			result.add(node);
 		}
+		
+		
 		for (SCPSNode child : node.getChildren()) {
-			travelDFS(leaves, child);
+			travelDFS(result, child, type);
 		}
 		
 	}

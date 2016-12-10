@@ -81,7 +81,7 @@ public class SCPSNode {
 	public void addChild(SCPSNode node, int tid, int checkPoint) {
 		node.setParent(this);
 		
-		if(tid <= checkPoint) {
+		if(tid < checkPoint) {
 			// 在检查点之前
 			node.setPTC(node.getPTC() + 1);
 		} else {

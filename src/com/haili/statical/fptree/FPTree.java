@@ -12,6 +12,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.fp.algorithm.FPGrowth;
+import com.fp.algorithm.TreeNode;
+import com.fp.util.FileReader;
+
 /**
  * fp-tree 算法
  * */
@@ -318,6 +322,26 @@ public class FPTree {
 			ordermap.put(node.getName(), i);
 		}
 
+	}
+	
+	public static void main(String[] args) throws IOException {
+		// 读取数据
+
+		String filePath = "dataset/statical/test2.dat";
+//		String filePath = "dataset/statical/mushroom.dat";
+		FileReader fileReader = new FileReader(filePath);
+
+		LinkedList<LinkedList<String>> database = fileReader.getDB();
+		
+		int sup = 3; // 最小支持度计数
+		
+		
+		FPGrowth fpg = new FPGrowth(sup);
+
+		LinkedList<TreeNode> orderheader = fpg.buildHeaderLink(database);
+
+		fpg.orderF1(orderheader);
+		fpg.fpgrowth(database, null);
 	}
 
 }
