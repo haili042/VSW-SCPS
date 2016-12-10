@@ -25,6 +25,11 @@ public class SCPSNode {
 		this.N = N;
 		this.C = 1;
 	}
+	
+	public SCPSNode(String N, int C) {
+		this.N = N;
+		this.C = C;
+	}
 
 	public SCPSNode getChild(String item) {
 
@@ -43,12 +48,20 @@ public class SCPSNode {
 			res = String.format("[=====root=====]");
 		} else if (this.isTailNode()) {
 			// ©³©×©·©Ï©ï©Ç©»©ß©¿©³©¥©·©§©¿©¥©»©§©°©Ð©´©È©¼©Ø©¸©À©à
-			res = String.format("[%2s, %2d, %2d, %2d]", this.getN(), this.getC(), this.getPTC(), this.getCTC());
+			res = String.format("[%2s,%3d,%3d,%3d]", this.getN(), this.getC(), this.getPTC(), this.getCTC());
 		} else {
-			res = String.format("[%2s, %2d, --, --]", this.getN(), this.getC());
+			res = String.format("[%2s,%3d,---,---]", this.getN(), this.getC());
 		}
 		
 		return res;
+	}
+	
+	/**
+	 * É¾³ý½Úµã 
+	 */
+	public void remove() {
+		SCPSNode parent = this.getParent();
+		parent.getChildren().remove(this);
 	}
 	
 	/**

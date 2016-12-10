@@ -17,5 +17,12 @@ public class VSWTest {
 		VSW vsw = new VSW(4, 3);
 		vsw.run();
 	}
+	public static void main(String[] args) {
+		List<String> l = new ArrayList<>();
+		l.add(0, "3");
+		l.add(0, "2");
+		l.add(0, "1");
+		System.out.println(l.toString());
+	}
 
 }
