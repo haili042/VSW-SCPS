@@ -11,9 +11,11 @@ public class SCPSNode {
 	private int C = 0; // 支持度计数
 	private String N; // 项名
 
-	private SCPSNode parent;
-	private LinkedList<SCPSNode> children = new LinkedList<>();
-	private SCPSNode brother;
+	private SCPSNode parent; // 父节点
+	private LinkedList<SCPSNode> children = new LinkedList<>(); // 孩子节点
+//	private SCPSNode nextHomonym = null; // 下一个同名兄弟节点
+//	private SCPSNode lastHomonym = null; // 前一个同名兄弟节点
+	
 	private boolean isTailNode;
 	
 
@@ -166,14 +168,6 @@ public class SCPSNode {
 		this.children = children;
 	}
 
-	public SCPSNode getBrother() {
-		return brother;
-	}
-
-	public void setBrother(SCPSNode brother) {
-		this.brother = brother;
-	}
-
 	public boolean isTailNode() {
 		return isTailNode;
 	}
@@ -181,5 +175,21 @@ public class SCPSNode {
 	public void setTailNode(boolean isTailNode) {
 		this.isTailNode = isTailNode;
 	}
+
+//	public SCPSNode getNextHomonym() {
+//		return nextHomonym;
+//	}
+//
+//	public void setNextHomonym(SCPSNode nextHomonym) {
+//		this.nextHomonym = nextHomonym;
+//	}
+//
+//	public SCPSNode getLastHomonym() {
+//		return lastHomonym;
+//	}
+//
+//	public void setLastHomonym(SCPSNode lastHomonym) {
+//		this.lastHomonym = lastHomonym;
+//	}
 
 }

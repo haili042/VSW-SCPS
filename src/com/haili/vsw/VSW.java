@@ -17,6 +17,7 @@ import com.haili.util.ConfigReader;
 public class VSW {
 	private int initSize;
 	private int paneSize;
+	private double change_th;
 	private int CP; // 检查点
 	private SCPSTree T = new SCPSTree();
 	private Set<String> lastFPSet = new HashSet<>();
@@ -30,7 +31,7 @@ public class VSW {
 	}
 	
 	public static void main(String[] args) {
-		VSW vsw = new VSW(6, 3);
+		VSW vsw = new VSW(12, 1);
 		vsw.run();
 	}
 	
@@ -38,7 +39,26 @@ public class VSW {
 	 * 检测是否已经发生了概念改变
 	 */
 	public boolean isConceptChange(Set<String> curFPSet) {
+		Set<String> temp = new HashSet<>();
 		
+		// curFPSet - lastFPSet
+		temp.clear();
+		temp.addAll(curFPSet);
+		temp.removeAll(lastFPSet);
+		int F1 = temp.size();
+		
+		// lastFPSet - curFPSet
+		temp.clear();
+		temp.addAll(lastFPSet);
+		temp.removeAll(curFPSet);
+		int F2 = temp.size();
+		
+		int F = 1000; // TODO 全集的数量
+		
+		double result = (double)(F1 + F2) / (F + F1);
+		if (result > change_th) {
+			return true;
+		}
 		return false;
 	}
 	
@@ -92,7 +112,7 @@ public class VSW {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		T.removeStaleWindow(T.getRoot());
+//		T.removeStaleWindow(T.getRoot());
 
 	}
 	

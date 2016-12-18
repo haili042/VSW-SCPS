@@ -5,13 +5,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 public class SCPSTree {
 
-	private Map<String, Integer> IList = new HashMap<>(); // i-list
+//	private Map<String, IlistItem> IList = new LinkedHashMap<>(); // i-list
+	
+	private Ilist ilist = new Ilist(); // i-list
+	
 	private List<SCPSNode> tailNodeList = new ArrayList<>(); // 记录尾节点， 减少遍历树次数
 	private SCPSNode root = new SCPSNode();
 	private int currentWindowSize = 0; // 当前窗口大小
@@ -33,30 +37,10 @@ public class SCPSTree {
 			this.currentWindowSize++;
 			insertPath(transaction, checkPoint); // 排序好的事务插入到SCPS树中
 		}
-		updateIList(pane); // 2 更新i-list
+		ilist.updateIList(pane); // 2 更新i-list
 		reconstruct(); // 根据最新I-list重构SCPS-tree
 	}
 	
-	/**
-	 * 插入事务后更新i-list顺序
-	 * 每插入一个pane的数据后执行一次
-	 */
-	public void updateIList(List<Map<String, Object>> pane) {
-		System.out.print("update i-list from " + IList.toString());
-		for (Map<String, Object> transaction : pane) {
-			int tid = (int) transaction.get("tid");
-			List<String> record = (List<String>) transaction.get("record");
-			
-			for (String str : record) {
-				if (IList.get(str) == null) {
-					IList.put(str, 1); // 初始值为1
-				} else {
-					IList.put(str, IList.get(str) + 1);
-				}
-			}
-		}
-		System.out.println(" to : " + IList.toString());
-	}
 	
 	/***
 	 * 在树重构阶段的插入， 与和tid，检查点无关
@@ -65,7 +49,7 @@ public class SCPSTree {
 	public void insertPath(List<String> record, int lastC, int lastPTC, int lastCTC) {
 
 		SCPSNode temp = root;
-		sortTransaction(record); // 根据i-list排序
+		ilist.sortTransaction(record); // 根据i-list排序
 		
 		for (int i = 0; i < record.size(); i++) {
 			String item = record.get(i);
@@ -112,7 +96,7 @@ public class SCPSTree {
 		int tid = (int) transaction.get("tid");
 		List<String> record = (List<String>) transaction.get("record");
 		
-		sortTransaction(record); // 根据i-list排序
+		ilist.sortTransaction(record); // 根据i-list排序
 		System.out.println("insert tid " + tid + " : " + record.toString());
 		
 		for (int i = 0; i < record.size(); i++) {
@@ -149,48 +133,6 @@ public class SCPSTree {
 	}
 	
 	/**
-	 * 事务根据i-list排序
-	 * @param transaction
-	 * @return
-	 */
-	public void sortTransaction(List<String> transaction) {
-		
-		Collections.sort(transaction, new Comparator<String>(){
-			
-			@Override
-			public int compare(String o1, String o2) {
-				
-				if (IList.get(o1) == null || IList.get(o2) == null || IList.get(o1) == IList.get(o2)) {
-					// 权值相同则按照字典序排序
-					// 初始也按照字典序排序
-					return o1.compareTo(o2);
-				} else {
-					// 优先按照支持数降序排序
-					return IList.get(o2) - IList.get(o1);
-				}
-			}
-		});
-	}
-	
-	/**
-	 * 判断是否已经符合i-list顺序
-	 * @param transaction
-	 * @return
-	 */
-	public boolean isSorted(List<String> transaction) {
-		for (int i = 0; i < transaction.size() - 1; i++) {
-			String cur = transaction.get(i);
-			String next = transaction.get(i + 1);
-			if (IList.get(cur) < IList.get(next)) {
-				return false;
-			} else if (IList.get(cur) == IList.get(next) && cur.compareTo(next) > 0) {
-				return false;
-			}
-		}
-		return true;
-	}
-	
-	/**
 	 * 从树中删除路径, 从叶子节点开始
 	 * @param leaf
 	 * @param leafCount
@@ -207,7 +149,8 @@ public class SCPSTree {
 				temp.setPTC(temp.getCTC());
 				temp.setCTC(0);
 				
-				IList.put(temp.getN(), IList.get(temp.getN()) - leafCount);
+				ilist.getItem(temp.getN());
+//				IList.put(temp.getN(), IList.get(temp.getN()) - leafCount);
 			}
 			
 			// 若计数为0， 则删除该节点
@@ -225,17 +168,20 @@ public class SCPSTree {
 	public void reconstruct() {
 		
 		print(root);
-	  	List<SCPSNode> leaves = new ArrayList<>();
-        travelDFS(leaves, root, "leaves");
+	  	List<SCPSNode> tailNodes = new ArrayList<>();
+        travelDFS(tailNodes, root, "tailNodes");
         
-        for (SCPSNode leaf : leaves) {
+        
+        
+        for (int i = tailNodes.size() - 1; i >= 0; i--) {
 			
-        	int lastC = leaf.getC();
-        	int lastPTC = leaf.getPTC();
-        	int lastCTC = leaf.getCTC();
+        	SCPSNode tailNode = tailNodes.get(i);
+        	int lastC = tailNode.getC();
+        	int lastPTC = tailNode.getPTC();
+        	int lastCTC = tailNode.getCTC();
         	
 			// 获取指定格式
-			SCPSNode temp = leaf;
+			SCPSNode temp = tailNode;
 			List<String> record = new ArrayList<>();
 			while (!temp.getN().equals("root")) {
 				record.add(0, temp.getN());
@@ -243,9 +189,9 @@ public class SCPSTree {
 			}
 			
 			// 如果有序就不用删除了
-			if (!isSorted(record)) {
+			if (!ilist.isSorted(record)) {
 				// 从树中删除一条路径
-				removePath(leaf, leaf.getC(), false);
+				removePath(tailNode, tailNode.getC(), false);
 				
 				// 排序后重新插入到树中， 此时与检查点无关
 				insertPath(record, lastC, lastPTC, lastCTC);
@@ -439,8 +385,8 @@ public class SCPSTree {
 	
 
 	/******************** getters and setters *******************/
-	public Map<String, Integer> getIList() {
-		return IList;
+	public Ilist getIlist() {
+		return ilist;
 	}
 
 	public SCPSNode getRoot() {
@@ -459,9 +405,5 @@ public class SCPSTree {
 		this.currentWindowSize = currentWindowSize;
 	}
 
-	public void setIList(Map<String, Integer> iList) {
-		IList = iList;
-	}
-	
 	
 }
