@@ -10,14 +10,9 @@ import java.util.TreeMap;
 
 public class Ilist {
 	
-	private Map<String, IlistItem> ilist = new LinkedHashMap<>(); // i-list
+	private Map<String, IlistItem> ilistMap = new LinkedHashMap<>(); // i-list
 	
 	public Ilist() {
-		
-	}
-	
-	public Ilist(Map<String, IlistItem> ilist) {
-		this.ilist = ilist;
 	}
 	
 	
@@ -32,13 +27,13 @@ public class Ilist {
 			
 			@Override
 			public int compare(String o1, String o2) {
-				if (ilist.get(o1) == null || ilist.get(o2) == null) {
+				if (ilistMap.get(o1) == null || ilistMap.get(o2) == null) {
 					// 权值相同则按照字典序排序
 					// 初始也按照字典序排序
 					return o1.compareTo(o2);
 				} else {
 					// 优先按照支持数降序排序
-					return ilist.get(o2).compareTo(ilist.get(o1));
+					return ilistMap.get(o2).compareTo(ilistMap.get(o1));
 				}
 			}
 		});
@@ -49,17 +44,17 @@ public class Ilist {
 	 * 插入事务后更新i-list顺序
 	 * 每插入一个pane的数据后执行一次
 	 */
-	public void updateIList(List<Map<String, Object>> pane) {
-		System.out.print("update i-list from " + ilist.toString());
+	public void addPane(List<Map<String, Object>> pane) {
+		System.out.println("update i-list\nfrom : " + ilistMap.toString());
 		for (Map<String, Object> transaction : pane) {
 			int tid = (int) transaction.get("tid");
 			List<String> record = (List<String>) transaction.get("record");
 			
 			for (String str : record) {
-				if (ilist.get(str) == null) {
-					ilist.put(str, new IlistItem(str)); // 初始值为1
+				if (ilistMap.get(str) == null) {
+					ilistMap.put(str, new IlistItem(str)); // 初始值为1
 				} else {
-					ilist.get(str).updateC(1); // 支持数加一
+					ilistMap.get(str).updateC(1); // 支持数加一
 //					IList.put(str, IList.get(str) + 1);
 				}
 			}
@@ -67,9 +62,22 @@ public class Ilist {
 		
 		// 频繁升序排序，方便for循环遍历
 		sort();
-		System.out.println(" to : " + ilist.toString());
+		System.out.println("to : " + ilistMap.toString());
 	}
 	
+	/**
+	 * 更新ilist计数
+	 * @param item 项名
+	 * @param n 要更新的计数
+	 */
+	public void updateItem(String item, int n) {
+		getItem(item).updateC(n); // ilist 减去计数
+		
+		// 若计数为0则从ilist中删除该项
+		if (getItem(item).getC() == 0) {
+			removeItem(item);
+		}
+	}
 	
 	/**
 	 * 判断是否已经符合i-list顺序
@@ -80,7 +88,7 @@ public class Ilist {
 		for (int i = 0; i < transaction.size() - 1; i++) {
 			String cur = transaction.get(i);
 			String next = transaction.get(i + 1);
-			if (ilist.get(cur).compareTo(ilist.get(next)) < 0) {
+			if (ilistMap.get(cur).compareTo(ilistMap.get(next)) < 0) {
 				return false;
 			}
 		}
@@ -88,31 +96,69 @@ public class Ilist {
 	}
 	
 	
-	// 频繁降序排序
+	/**
+	 * 根据
+	 * 频繁升序排序
+	 * 利于for循环
+	 */
 	public void sort() {
 	    Map<String, IlistItem> sortedMap = new TreeMap<>(new Comparator<String>() {  
 	        public int compare(String key1, String key2) {  
-	        	IlistItem v1 = ilist.get(key1), v2 = ilist.get(key2);  
+	        	IlistItem v1 = ilistMap.get(key1), v2 = ilistMap.get(key2);  
 	        	
 	            return v1.compareTo(v2);  
 	        }});  
-	    sortedMap.putAll(ilist);
+	    sortedMap.putAll(ilistMap);
 	    
 	    Map<String, IlistItem> result = new LinkedHashMap<>();
 	    for (String key : sortedMap.keySet()) {
 	    	result.put(key, sortedMap.get(key));
 		}
-	    ilist = result;
+	    ilistMap = result;
 	}
 	
-	// 获取ilist
-	public Map<String, IlistItem> getIlist() {
-		return ilist;
+	/**
+	 * 获取ilist
+	 * @return
+	 */
+	public Map<String, IlistItem> getIlistMap() {
+		return ilistMap;
 	}
 
-	// 获取项
+	
+	/**
+	 * 获取头表的项
+	 * @param key
+	 * @return
+	 */
 	public IlistItem getItem(String key) {
-		return ilist.get(key);
+		return ilistMap.get(key);
+	}
+	
+	/**
+	 * 添加树节点到ilist对应项的兄弟节点表中
+	 * @param item
+	 * @param node
+	 */
+	public void addItemBrother(String item, SCPSNode node) {
+		if (getItem(item) == null) {
+			ilistMap.put(item, new IlistItem(item));
+		}
+		getItem(item).getNextBrotherList().add(node);
+	}
+	
+	/**
+	 * 删除同名兄弟节点
+	 */
+	public void removeItemBrother(String item, SCPSNode node) {
+		getItem(item).getNextBrotherList().remove(node);
+	}
+	
+	/**
+	 * 删除项
+	 */
+	public void removeItem(String item) {
+		ilistMap.remove(item);
 	}
 
 }

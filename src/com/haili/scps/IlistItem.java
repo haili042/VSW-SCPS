@@ -8,11 +8,11 @@ public class IlistItem {
 
 	private String N; // 名称
 	private int C; // 支持度计数
-	private LinkedList<SCPSNode> nextBroderList = new LinkedList<>(); // 指向同名兄弟的指针
+	private LinkedList<SCPSNode> nextBrotherList = new LinkedList<>(); // 指向同名兄弟的指针
 
 	public IlistItem(String N) {
 		this.N = N;
-		this.C = 1;
+		this.C = 0;
 	}
 
 	public IlistItem(String N, int C) {
@@ -24,7 +24,11 @@ public class IlistItem {
 		return String.format("[%s, %d]", N, C);
 	}
 
-	// 频繁降序比较大小
+	/**
+	 * 频繁降序比较大小
+	 * @param item
+	 * @return
+	 */
 	public int compareTo(IlistItem item) {
 
 		// 初始也按照字典序排序
@@ -36,12 +40,24 @@ public class IlistItem {
 			return this.C - item.getC();
 		}
 	}
-
-	// 更新计数
+	
+	/**
+	 * 添加兄弟节点
+	 */
+	public void addBrother(SCPSNode node) {
+		if (!nextBrotherList.contains(node)) {
+			nextBrotherList.add(node);
+		}
+	}
+	
+	/**
+	 * 更新计数
+	 * @param n
+	 */
 	public void updateC(int n) {
 		this.C = this.C + n;
 	}
-
+	
 	public String getN() {
 		return N;
 	}
@@ -58,8 +74,8 @@ public class IlistItem {
 		C = c;
 	}
 
-	public List<SCPSNode> getNextBroderList() {
-		return nextBroderList;
+	public List<SCPSNode> getNextBrotherList() {
+		return nextBrotherList;
 	}
 
 }

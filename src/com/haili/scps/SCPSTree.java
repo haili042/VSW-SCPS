@@ -19,7 +19,6 @@ public class SCPSTree {
 	private List<SCPSNode> tailNodeList = new ArrayList<>(); // 记录尾节点， 减少遍历树次数
 	private SCPSNode root = new SCPSNode();
 	private int currentWindowSize = 0; // 当前窗口大小
-	private double minSup; // 最小支持度
     
 
 	public SCPSTree() {}
@@ -37,7 +36,7 @@ public class SCPSTree {
 			this.currentWindowSize++;
 			insertPath(transaction, checkPoint); // 排序好的事务插入到SCPS树中
 		}
-		ilist.updateIList(pane); // 2 更新i-list
+		ilist.addPane(pane); // 2 更新i-list
 		reconstruct(); // 根据最新I-list重构SCPS-tree
 	}
 	
@@ -64,8 +63,13 @@ public class SCPSTree {
 					node.setCTC(lastCTC);
 					temp.addChild(node);
 					temp = node;
+					ilist.addItemBrother(node.getN(), node);
+
 				} else {
 					child.updateChild(lastC); // 更新已有节点计数
+					child.setTailNode(true);
+					child.setPTC(lastPTC);
+					child.setCTC(lastCTC);
 					temp = child;
 				}
 				
@@ -76,6 +80,8 @@ public class SCPSTree {
 					
 					temp.addChild(node);
 					temp = node;
+					ilist.addItemBrother(node.getN(), node);
+
 				} else {
 					child.updateChild(lastC); // 更新已有节点计数
 					temp = child;
@@ -110,6 +116,8 @@ public class SCPSTree {
 					
 					temp.addChild(node, tid, checkPoint);
 					temp = node;
+					ilist.addItemBrother(node.getN(), node);
+					
 				} else {
 					child.updateChild(1, tid, checkPoint); // 更新已有节点计数
 					temp = child;
@@ -122,6 +130,8 @@ public class SCPSTree {
 					
 					temp.addChild(node);
 					temp = node;
+					ilist.addItemBrother(node.getN(), node);
+
 				} else {
 					child.updateChild(1); // 更新已有节点计数
 					temp = child;
@@ -136,28 +146,34 @@ public class SCPSTree {
 	 * 从树中删除路径, 从叶子节点开始
 	 * @param leaf
 	 * @param leafCount
-	 * @param update 是否是删除检查点之前数据时的删除操作
+	 * @param needUpdateIlistCount 是否是删除检查点之前数据时的删除操作
 	 */
-	public void removePath(SCPSNode leaf, int leafCount, boolean update) {
+	public void removePath(SCPSNode leaf, int leafCount, boolean needUpdateIlistCount) {
 		SCPSNode temp = leaf;
 		while (!temp.getN().equals("root")) {
 			temp.setC(temp.getC() - leafCount);
 			
-			// 更新 i-list
-			if (update) {
+			// 更新 i-list 计数
+			if (needUpdateIlistCount) {
 				// 更新PTC和CTC的值
 				temp.setPTC(temp.getCTC());
 				temp.setCTC(0);
 				
-				ilist.getItem(temp.getN());
+				ilist.updateItem(temp.getN(), -leafCount); // ilist 减去计数
 //				IList.put(temp.getN(), IList.get(temp.getN()) - leafCount);
 			}
 			
 			// 若计数为0， 则删除该节点
 			if (temp.getC() == 0) {
+				ilist.removeItemBrother(temp.getN(), temp); // 删除ilist兄弟节点
 				temp.remove();
 			}
 			temp = temp.getParent();
+		}
+
+		// 更新窗口大小
+		if (needUpdateIlistCount) {
+			this.currentWindowSize -= leafCount;
 		}
 	}
 	
@@ -192,21 +208,25 @@ public class SCPSTree {
 			if (!ilist.isSorted(record)) {
 				// 从树中删除一条路径
 				removePath(tailNode, tailNode.getC(), false);
+//				print(root);
 				
 				// 排序后重新插入到树中， 此时与检查点无关
 				insertPath(record, lastC, lastPTC, lastCTC);
+//				print(root);
 			}
 			
 		}
 		System.out.println("after reconstruction...");
 		print(root);
-		
+		System.out.println("current window size : " + getCurrentWindowSize() + "\n");
+
 	}
 	
 	/**
 	 * 删除过期数据
 	 */
 	public void removeStaleWindow(SCPSNode root) {
+		System.out.println("removing old window .... ");
 	  	List<SCPSNode> tailNodes = new ArrayList<>();
         travelDFS(tailNodes, root, "tailNodes");
         
@@ -329,18 +349,18 @@ public class SCPSTree {
 					String s = sn.getN();
 					
 					if (s.equals("|")) {
-						System.out.print("            │       ");
+						System.out.print("            │        ");
 					} else if (s.equals("-")) {
-						System.out.print("────────────────────");
+						System.out.print("─────────────────────");
 					} else if (s.equals("+")) {
-						System.out.print("────────────┬───────");
+						System.out.print("────────────┬────────");
 					} else if (s.equals("^")) {
-						System.out.print("────────────┐       ");
+						System.out.print("────────────┐        ");
 					} else {
 						System.out.print("    " + sn.toString());
 					}
 				} else {
-					System.out.print("                    ");
+					System.out.print("                     ");
 				}
 			}
 			System.out.println();

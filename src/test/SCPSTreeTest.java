@@ -52,7 +52,7 @@ public class SCPSTreeTest {
 		VSW vsw = new VSW(4, 2);
 		List<Map<String, Object>> db = dataset.readData();
 		
-		tree.updateIList(db);
+		tree.addPane(db);
 		System.out.println(tree.getIList().toString());		
 	}
 	
@@ -62,7 +62,7 @@ public class SCPSTreeTest {
 		DataIO dataset = new DataIO("test"); // accidents.dat нд╪Ч
 		VSW vsw = new VSW(4, 2);
 		List<Map<String, Object>> db = dataset.readData();
-		tree.updateIList(db);
+		tree.addPane(db);
 		
 		LinkedList<String> t = new LinkedList<>();
 		t.add("d");

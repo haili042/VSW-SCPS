@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import com.haili.mining.COFI;
 import com.haili.scps.SCPSTree;
 import com.haili.util.ConfigReader;
 
@@ -31,7 +32,7 @@ public class VSW {
 	}
 	
 	public static void main(String[] args) {
-		VSW vsw = new VSW(12, 1);
+		VSW vsw = new VSW(9, 9);
 		vsw.run();
 	}
 	
@@ -103,7 +104,6 @@ public class VSW {
 					
 					T.insertPane(pane, CP);
 					
-					System.out.println("current window size : " + T.getCurrentWindowSize() + "\n");
 					pane.clear(); // ÷ÿ÷√pane
 				}
 
@@ -113,7 +113,9 @@ public class VSW {
 			e.printStackTrace();
 		}
 //		T.removeStaleWindow(T.getRoot());
-
+		COFI cofi = new COFI(T, 0.1);
+		cofi.mine();
+		System.out.println();
 	}
 	
 }

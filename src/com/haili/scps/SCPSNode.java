@@ -47,12 +47,12 @@ public class SCPSNode {
 	public String toString() {
 		String res = "";
 		if (this.getN().equals("root")) {
-			res = String.format("[=====root=====]");
+			res = String.format("[======root=====]");
 		} else if (this.isTailNode()) {
 			// ©³©×©·©Ï©ï©Ç©»©ß©¿©³©¥©·©§©¿©¥©»©§©°©Ð©´©È©¼©Ø©¸©À©à
-			res = String.format("[%2s,%3d,%3d,%3d]", this.getN(), this.getC(), this.getPTC(), this.getCTC());
+			res = String.format("[%3s,%3d,%3d,%3d]", this.getN(), this.getC(), this.getPTC(), this.getCTC());
 		} else {
-			res = String.format("[%2s,%3d,---,---]", this.getN(), this.getC());
+			res = String.format("[%3s,%3d,---,---]", this.getN(), this.getC());
 		}
 		
 		return res;
