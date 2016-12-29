@@ -8,8 +8,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.haili.scps.SCPSTree;
+import com.haili.sw.SW;
 import com.haili.util.DataIO;
-import com.haili.vsw.VSW;
 
 public class SCPSTreeTest {
 
@@ -36,7 +36,7 @@ public class SCPSTreeTest {
 //		db.add(t2);
 		
 		DataIO dataset = new DataIO("test"); // accidents.dat 文件
-		VSW vsw = new VSW(4, 2);
+		SW vsw = new SW(4, 2);
 		List<Map<String, Object>> db = dataset.readData();
 		
 		for (Map<String, Object> transaction : db) {
@@ -49,7 +49,7 @@ public class SCPSTreeTest {
 	public void updateIList() {
 		SCPSTree tree = new SCPSTree();
 		DataIO dataset = new DataIO("test"); // accidents.dat 文件
-		VSW vsw = new VSW(4, 2);
+		SW vsw = new SW(4, 2);
 		List<Map<String, Object>> db = dataset.readData();
 		
 		tree.addPane(db);
@@ -60,7 +60,7 @@ public class SCPSTreeTest {
 	public void sortTransaction() {
 		SCPSTree tree = new SCPSTree();
 		DataIO dataset = new DataIO("test"); // accidents.dat 文件
-		VSW vsw = new VSW(4, 2);
+		SW vsw = new SW(4, 2);
 		List<Map<String, Object>> db = dataset.readData();
 		tree.addPane(db);
 		

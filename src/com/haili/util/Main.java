@@ -12,7 +12,7 @@ import java.util.Set;
 
 import com.haili.statical.fptree.FPTree;
 import com.haili.statical.fptree.TreeNode2;
-import com.haili.vsw.VSW;
+import com.haili.sw.SW;
 
 public class Main {
 

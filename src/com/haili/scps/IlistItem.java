@@ -8,7 +8,7 @@ public class IlistItem {
 
 	private String N; // 名称
 	private int C; // 支持度计数
-	private LinkedList<SCPSNode> nextBrotherList = new LinkedList<>(); // 指向同名兄弟的指针
+	private List<SCPSNode> nextBrotherList = new LinkedList<>(); // 指向同名兄弟的指针
 
 	public IlistItem(String N) {
 		this.N = N;
@@ -21,7 +21,7 @@ public class IlistItem {
 	}
 
 	public String toString() {
-		return String.format("[%s, %d]", N, C);
+		return String.format("%s(%d)", N, C);
 	}
 
 	/**

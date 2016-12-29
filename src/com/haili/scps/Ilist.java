@@ -39,13 +39,34 @@ public class Ilist {
 		});
 	}
 	
+	/**
+	 * 找出虚拟节点（有序事务中最后一个大于最小支持数的项）
+	 * @return
+	 */
+	public String getVirtualItem(List<String> record, int minSN) {
+		if (record.size() <= 0) {
+			return null;
+		}
+		String virtualItem = record.get(0);
+		for (String str : record) {
+			int v = this.getItem(str).getC();
+			if (v >= minSN) {
+				virtualItem = str;
+			} else {
+				break;
+			}
+		}
+		
+		return virtualItem;
+	}
+	
 	
 	/**
 	 * 插入事务后更新i-list顺序
 	 * 每插入一个pane的数据后执行一次
 	 */
 	public void addPane(List<Map<String, Object>> pane) {
-		System.out.println("update i-list\nfrom : " + ilistMap.toString());
+//		System.out.println("update i-list\nfrom : " + ilistMap.toString());
 		for (Map<String, Object> transaction : pane) {
 			int tid = (int) transaction.get("tid");
 			List<String> record = (List<String>) transaction.get("record");
@@ -62,7 +83,7 @@ public class Ilist {
 		
 		// 频繁升序排序，方便for循环遍历
 		sort();
-		System.out.println("to : " + ilistMap.toString());
+//		System.out.println("to : " + ilistMap.toString());
 	}
 	
 	/**
@@ -74,9 +95,9 @@ public class Ilist {
 		getItem(item).updateC(n); // ilist 减去计数
 		
 		// 若计数为0则从ilist中删除该项
-		if (getItem(item).getC() == 0) {
-			removeItem(item);
-		}
+//		if (getItem(item).getC() == 0) {
+//			removeItem(item);
+//		}
 	}
 	
 	/**

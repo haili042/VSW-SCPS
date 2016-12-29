@@ -11,7 +11,7 @@ import org.junit.BeforeClass;
 
 import com.haili.scps.Ilist;
 import com.haili.scps.IlistItem;
-import com.haili.vsw.VSW;
+import com.haili.sw.SW;
 
 public class VSWTest {
 
@@ -20,7 +20,7 @@ public class VSWTest {
 	}
 
 	public void test() {
-		VSW vsw = new VSW(4, 3);
+		SW vsw = new SW(4, 3);
 		vsw.run();
 	}
 

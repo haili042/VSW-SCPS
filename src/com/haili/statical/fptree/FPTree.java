@@ -12,9 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.fp.algorithm.FPGrowth;
-import com.fp.algorithm.TreeNode;
-import com.fp.util.FileReader;
 
 /**
  * fp-tree 算法
@@ -31,8 +28,8 @@ public class FPTree {
 	
 	public LinkedList<LinkedList<String>> readF1() throws IOException {
 		LinkedList<LinkedList<String>> records = new LinkedList<LinkedList<String>>();
-		// String filePath = "dataset/statical/fptreeTest.csv";
-		String filePath = "dataset/statical/test.ascii";
+		 String filePath = "dataset/statical/mushroom.dat";
+//		String filePath = "dataset/statical/test.ascii";
 //		String filePath = "dataset/statical/T40I10D100K.ascii";
 		BufferedReader br = new BufferedReader(new InputStreamReader(
 				new FileInputStream(filePath)));
@@ -73,7 +70,7 @@ public class FPTree {
 					node.setName(item);
 					node.setCount(1);
 					map.put(item, node);
-					System.out.println("add new node" + item);
+//					System.out.println("add new node" + item);
 				}
 			}
 		}
@@ -83,7 +80,7 @@ public class FPTree {
 			TreeNode2 tnode = map.get(name);
 			if (tnode.getCount() >= support) {
 				header.add(tnode);
-				System.out.println(tnode + " > minsup, add to header");
+//				System.out.println(tnode + " > minsup, add to header");
 			}
 		}
 		sort(header);
@@ -267,7 +264,7 @@ public class FPTree {
 		TreeNode2 fptree = builderFpTree(records, header);
 		// 结束递归的条件
 		if (header.size() <= 0 || fptree == null) {
-			System.out.println("-----------------");
+//			System.out.println("-----------------");
 			return;
 		}
 		// 打印结果,输出频繁项集
@@ -284,8 +281,7 @@ public class FPTree {
 
 				}
 				// 打印频繁项集
-				System.out.println("{" + head.getName() + "," + item
-						+ "}\tcount=" + count);
+//				System.out.println("{" + head.getName() + "," + item + "}\tcount=" + count);
 			}
 		}
 		// 寻找条件模式基,从链尾开始
@@ -327,21 +323,27 @@ public class FPTree {
 	public static void main(String[] args) throws IOException {
 		// 读取数据
 
-		String filePath = "dataset/statical/test2.dat";
+		String filePath = "dataset/statical/mushroom.dat";
 //		String filePath = "dataset/statical/mushroom.dat";
 		FileReader fileReader = new FileReader(filePath);
 
 		LinkedList<LinkedList<String>> database = fileReader.getDB();
 		
-		int sup = 3; // 最小支持度计数
+		int sup = (int) (database.size() * 0.25); // 最小支持度计数
 		
 		
-		FPGrowth fpg = new FPGrowth(sup);
+		long begin = System.currentTimeMillis();
+		FPTree fpg = new FPTree(sup);
 
-		LinkedList<TreeNode> orderheader = fpg.buildHeaderLink(database);
+		LinkedList<TreeNode2> orderheader = fpg.buildHeaderLink(database);
 
 		fpg.orderF1(orderheader);
 		fpg.fpgrowth(database, null);
+		long end = System.currentTimeMillis();
+		
+		System.out.println(String.format("cost : %dms", end - begin));
+
+		
 	}
 
 }

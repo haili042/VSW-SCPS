@@ -10,18 +10,23 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.text.html.MinimalHTMLWriter;
+
 public class SCPSTree {
 
 //	private Map<String, IlistItem> IList = new LinkedHashMap<>(); // i-list
 	
 	private Ilist ilist = new Ilist(); // i-list
 	
-	private List<SCPSNode> tailNodeList = new ArrayList<>(); // 记录尾节点， 减少遍历树次数
-	private SCPSNode root = new SCPSNode();
+//	private List<SCPSNode> tailNodeList = new ArrayList<>(); // 记录尾节点， 减少遍历树次数
+	private SCPSNode root = new SCPSNode("root");
 	private int currentWindowSize = 0; // 当前窗口大小
-    
+	private double minSup; // 最小支持度
 
-	public SCPSTree() {}
+	
+	public SCPSTree(double minSup) {
+		this.minSup = minSup;
+	}
 	
 	
 	/**
@@ -32,7 +37,6 @@ public class SCPSTree {
 		
 		// 1 插入一批数据
 		for (Map<String, Object> transaction : pane) {
-
 			this.currentWindowSize++;
 			insertPath(transaction, checkPoint); // 排序好的事务插入到SCPS树中
 		}
@@ -45,31 +49,35 @@ public class SCPSTree {
 	 * 在树重构阶段的插入， 与和tid，检查点无关
 	 * @param record
 	 */
-	public void insertPath(List<String> record, int lastC, int lastPTC, int lastCTC) {
+	public void insertPath(List<String> record, int lastC, int lastPTC, int lastCTC, String virtualItem) {
 
 		SCPSNode temp = root;
-		ilist.sortTransaction(record); // 根据i-list排序
 		
 		for (int i = 0; i < record.size(); i++) {
 			String item = record.get(i);
 			SCPSNode child = temp.getChild(item);
 			
+			boolean isVirtual = item.equals(virtualItem); // 大于支持度的最后一个点
+			
 			if (i == record.size() - 1) {
 				// 添加尾节点
 				if (child == null) {
 					SCPSNode node = new SCPSNode(item, lastC);
-					node.setTailNode(true);
-					node.setPTC(lastPTC);
-					node.setCTC(lastCTC);
+					node.isTailNode = true;
+					node.preCount = (lastPTC);
+					node.curCount = (lastCTC);
+					node.isVirtual = isVirtual;
 					temp.addChild(node);
 					temp = node;
-					ilist.addItemBrother(node.getN(), node);
+					ilist.addItemBrother(node.item, node);
 
 				} else {
 					child.updateChild(lastC); // 更新已有节点计数
-					child.setTailNode(true);
-					child.setPTC(lastPTC);
-					child.setCTC(lastCTC);
+					child.isTailNode = true;
+					child.isVirtual = isVirtual;
+
+					child.preCount = (lastPTC);
+					child.curCount = (lastCTC);
 					temp = child;
 				}
 				
@@ -77,13 +85,14 @@ public class SCPSTree {
 				// 普通节点插入到树中
 				if (child == null) {
 					SCPSNode node = new SCPSNode(item, lastC);
-					
+					node.isVirtual = isVirtual;
 					temp.addChild(node);
 					temp = node;
-					ilist.addItemBrother(node.getN(), node);
+					ilist.addItemBrother(node.item, node);
 
 				} else {
 					child.updateChild(lastC); // 更新已有节点计数
+					child.isVirtual = isVirtual;
 					temp = child;
 				}
 			}
@@ -103,7 +112,7 @@ public class SCPSTree {
 		List<String> record = (List<String>) transaction.get("record");
 		
 		ilist.sortTransaction(record); // 根据i-list排序
-		System.out.println("insert tid " + tid + " : " + record.toString());
+		 System.out.println("insert tid " + tid + " : " + record.toString());
 		
 		for (int i = 0; i < record.size(); i++) {
 			String item = record.get(i);
@@ -116,7 +125,7 @@ public class SCPSTree {
 					
 					temp.addChild(node, tid, checkPoint);
 					temp = node;
-					ilist.addItemBrother(node.getN(), node);
+					ilist.addItemBrother(node.item, node);
 					
 				} else {
 					child.updateChild(1, tid, checkPoint); // 更新已有节点计数
@@ -130,7 +139,7 @@ public class SCPSTree {
 					
 					temp.addChild(node);
 					temp = node;
-					ilist.addItemBrother(node.getN(), node);
+					ilist.addItemBrother(node.item, node);
 
 				} else {
 					child.updateChild(1); // 更新已有节点计数
@@ -150,25 +159,26 @@ public class SCPSTree {
 	 */
 	public void removePath(SCPSNode leaf, int leafCount, boolean needUpdateIlistCount) {
 		SCPSNode temp = leaf;
-		while (!temp.getN().equals("root")) {
-			temp.setC(temp.getC() - leafCount);
+		while (!temp.item.equals("root")) {
+			temp.count = temp.count - leafCount;
+			temp.isVirtual = false; // 重置虚拟节点
 			
 			// 更新 i-list 计数
 			if (needUpdateIlistCount) {
 				// 更新PTC和CTC的值
-				temp.setPTC(temp.getCTC());
-				temp.setCTC(0);
+				temp.preCount = (temp.curCount);
+				temp.curCount = 0;
 				
-				ilist.updateItem(temp.getN(), -leafCount); // ilist 减去计数
+				ilist.updateItem(temp.item, -leafCount); // ilist 减去计数
 //				IList.put(temp.getN(), IList.get(temp.getN()) - leafCount);
 			}
 			
 			// 若计数为0， 则删除该节点
-			if (temp.getC() == 0) {
-				ilist.removeItemBrother(temp.getN(), temp); // 删除ilist兄弟节点
+			if (temp.count == 0) {
+				ilist.removeItemBrother(temp.item, temp); // 删除ilist兄弟节点
 				temp.remove();
 			}
-			temp = temp.getParent();
+			temp = temp.parent;
 		}
 
 		// 更新窗口大小
@@ -180,39 +190,69 @@ public class SCPSTree {
 	
 	/**
 	 * 根据BSM策重构整树的结构
+	 * 并为虚拟节点打上标记， 因为fp树在挖掘的时候是要删除支持数<minSup的节点的
+	 * SCPStree中保存了这些节点， 并为最后的节点打上虚拟节点标记， 
+	 * 虚拟节点到以下所有的子树都是虚拟的
 	 */
 	public void reconstruct() {
 		
-		print(root);
+		 print(root);
 	  	List<SCPSNode> tailNodes = new ArrayList<>();
         travelDFS(tailNodes, root, "tailNodes");
-        
-        
         
         for (int i = tailNodes.size() - 1; i >= 0; i--) {
 			
         	SCPSNode tailNode = tailNodes.get(i);
-        	int lastC = tailNode.getC();
-        	int lastPTC = tailNode.getPTC();
-        	int lastCTC = tailNode.getCTC();
+        	int lastC = tailNode.count;
+        	int lastPTC = tailNode.preCount;
+        	int lastCTC = tailNode.curCount;
         	
 			// 获取指定格式
 			SCPSNode temp = tailNode;
 			List<String> record = new ArrayList<>();
-			while (!temp.getN().equals("root")) {
-				record.add(0, temp.getN());
-				temp = temp.getParent();
+			while (!temp.item.equals("root")) {
+				record.add(0, temp.item);
+				// 清空原来的虚拟标记
+				temp.isVirtual = false;
+				temp = temp.parent;
 			}
 			
-			// 如果有序就不用删除了
 			if (!ilist.isSorted(record)) {
+				// 如果路径无序
 				// 从树中删除一条路径
-				removePath(tailNode, tailNode.getC(), false);
+				removePath(tailNode, tailNode.count, false);
 //				print(root);
 				
+				// record 根据i-list排序
+				ilist.sortTransaction(record); 
+				// 支持数
+				int minSN = (int) Math.ceil(this.minSup * this.currentWindowSize);
+				// 找到虚拟项
+				String virtualItem = ilist.getVirtualItem(record, minSN);
+				
+//				System.out.println(record.toString());
+//				System.out.println("virtual item : " + virtualItem);
+				
 				// 排序后重新插入到树中， 此时与检查点无关
-				insertPath(record, lastC, lastPTC, lastCTC);
+				insertPath(record, lastC, lastPTC, lastCTC, virtualItem);
 //				print(root);
+			} else {
+				// 如果有序就不用删除了
+				ilist.sortTransaction(record); 
+				// 支持数
+				int minSN = (int) Math.ceil(this.minSup * this.currentWindowSize);
+				// 找到虚拟项
+				String virtualItem = ilist.getVirtualItem(record, minSN);
+				
+				// 更新虚拟节点
+				SCPSNode temp2 = tailNode;
+				while (temp2 != null && !temp2.item.equals("root")) {
+					if (virtualItem != null && temp2.item.equals(virtualItem)) {
+						tailNode.isVirtual = true;
+						break;
+					}
+					temp2 = temp.parent;
+				}
 			}
 			
 		}
@@ -226,13 +266,13 @@ public class SCPSTree {
 	 * 删除过期数据
 	 */
 	public void removeStaleWindow(SCPSNode root) {
-		System.out.println("removing old window .... ");
+//		System.out.println("removing old window .... ");
 	  	List<SCPSNode> tailNodes = new ArrayList<>();
         travelDFS(tailNodes, root, "tailNodes");
         
         for (SCPSNode leaf : tailNodes) {
 			// 从树中删除一条路径, 权值为该路径叶子节点的PTC值
-        	int ptc = leaf.getPTC();
+        	int ptc = leaf.preCount;
 			removePath(leaf, ptc, true);
 		}
 		
@@ -257,7 +297,7 @@ public class SCPSTree {
 		
 		while (!queue.isEmpty()) {
 			SCPSNode temp = queue.poll();
-			LinkedList<SCPSNode> children = temp.getChildren();
+			LinkedList<SCPSNode> children = temp.children;
 			
 			for (int i = 0; i < getPathSize(lastNode) - 1; i++) {
 				row.add(null); // 占位
@@ -268,7 +308,7 @@ public class SCPSTree {
 				int pos = 0;
 				for (int i = 0; i < lastRow.size(); i++) {
 					// 对应上父节点
-					if (temp.getParent().equals(lastRow.get(i))) {
+					if (temp.parent.equals(lastRow.get(i))) {
 						pos = i;
 					}
 				}
@@ -282,7 +322,7 @@ public class SCPSTree {
 			
 			row.add(temp);
 			
-			nextLevelSize += temp.getChildren().size();
+			nextLevelSize += temp.children.size();
 			lastNode = temp;
 			
 			for (SCPSNode n : children) {
@@ -318,7 +358,7 @@ public class SCPSTree {
 				if (line.size() < j + 1) {
 					line.add(null);
 				}
-				if (n != null && n.getN().equals("|") && line.get(j) == null) {
+				if (n != null && n.item.equals("|") && line.get(j) == null) {
 					// 如果是横线且没有对应的上面的元素和其连接，则设置为竖线
 					line.set(j, new SCPSNode("^"));
 					
@@ -326,7 +366,7 @@ public class SCPSTree {
 					for (int k = j - 1; k >= 0; k--) {
 						if (line.get(k) == null) {
 							line.set(k, new SCPSNode("-"));
-						} else if (line.get(k).getN().equals("^")) {
+						} else if (line.get(k).item.equals("^")) {
 							line.set(k, new SCPSNode("+"));
 						} else {
 							break;
@@ -346,7 +386,7 @@ public class SCPSTree {
 			for (int j = 0; j < line.size(); j++) {
 				SCPSNode sn = line.get(j);
 				if (sn != null) {
-					String s = sn.getN();
+					String s = sn.item;
 					
 					if (s.equals("|")) {
 						System.out.print("            │        ");
@@ -388,16 +428,16 @@ public class SCPSTree {
 			return;
 		}
 			
-		if (type.equals("leaves") && node.getChildren().size() == 0) {
+		if (type.equals("leaves") && node.children.size() == 0) {
 			// 叶子节点
 			result.add(node);
-		} else if (type.equals("tailNodes") && node.isTailNode()) {
+		} else if (type.equals("tailNodes") && node.isTailNode) {
 			// 尾节点
 			result.add(node);
 		}
 		
 		
-		for (SCPSNode child : node.getChildren()) {
+		for (SCPSNode child : node.children) {
 			travelDFS(result, child, type);
 		}
 		

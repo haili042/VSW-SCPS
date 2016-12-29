@@ -6,37 +6,39 @@ import java.util.List;
 
 public class SCPSNode {
 
-	private int PTC = 0; // 检查点之前的计数
-	private int CTC = 0; // 检查点之后的计数
-	private int C = 0; // 支持度计数
-	private String N; // 项名
+	int preCount = 0; // 检查点之前的计数 previous count
+	int curCount = 0; // 检查点之后的计数 current count
+	int count = 0; // 支持度计数 count
+	String item; // 项名
+	SCPSNode next = null;
 
-	private SCPSNode parent; // 父节点
-	private LinkedList<SCPSNode> children = new LinkedList<>(); // 孩子节点
-//	private SCPSNode nextHomonym = null; // 下一个同名兄弟节点
-//	private SCPSNode lastHomonym = null; // 前一个同名兄弟节点
+	SCPSNode parent; // 父节点
+	LinkedList<SCPSNode> children = new LinkedList<>(); // 孩子节点
+//	SCPSNode nextHomonym = null; // 下一个同名兄弟节点
+//	SCPSNode lastHomonym = null; // 前一个同名兄弟节点
 	
-	private boolean isTailNode;
+	boolean isTailNode; // 是否是尾节点
+	boolean isVirtual; // 是否是虚拟节点
+	boolean isRoot;
 	
 
-	public SCPSNode() {
-		this.N = "root";
+	public SCPSNode(String item) {
+		this.item = item;
+		this.count = 1;
+		this.isRoot = "root".equals(item);
 	}
-
-	public SCPSNode(String N) {
-		this.N = N;
-		this.C = 1;
-	}
 	
-	public SCPSNode(String N, int C) {
-		this.N = N;
-		this.C = C;
+	public SCPSNode(String item, int count) {
+		this.item = item;
+		this.count = count;
+		this.isRoot = "root".equals(item);
+
 	}
 
 	public SCPSNode getChild(String item) {
 
 		for (SCPSNode node : children) {
-			if (item.equals(node.getN())) {
+			if (item.equals(node.item)) {
 				return node;
 			}
 		}
@@ -46,13 +48,21 @@ public class SCPSNode {
 	@Override
 	public String toString() {
 		String res = "";
-		if (this.getN().equals("root")) {
-			res = String.format("[======root=====]");
-		} else if (this.isTailNode()) {
+		String bracketL = "[";
+		String bracketR = "]";
+		
+		if (isVirtual) {
+			bracketL = "<";
+			bracketR = ">";
+		}
+
+		if (item.equals("root")) {
+			res = String.format(bracketL + "======root=====" + bracketR);
+		} else if (isTailNode) {
 			// ┏┳┓┫╋┣┗┻┛┏━┓┃┛━┗┃┌┬┐┤┘┴└├┼
-			res = String.format("[%3s,%3d,%3d,%3d]", this.getN(), this.getC(), this.getPTC(), this.getCTC());
+			res = String.format(bracketL + "%3s,%3d,%3d,%3d" + bracketR, item, count, preCount, curCount);
 		} else {
-			res = String.format("[%3s,%3d,---,---]", this.getN(), this.getC());
+			res = String.format(bracketL + "%3s,%3d,---,---" + bracketR, item, count);
 		}
 		
 		return res;
@@ -62,8 +72,7 @@ public class SCPSNode {
 	 * 删除节点 
 	 */
 	public void remove() {
-		SCPSNode parent = this.getParent();
-		parent.getChildren().remove(this);
+		parent.children.remove(this);
 	}
 	
 	/**
@@ -71,7 +80,7 @@ public class SCPSNode {
 	 * @param node
 	 */
 	public void addChild(SCPSNode node) {
-		node.setParent(this);
+		node.parent = this;
 		this.children.add(node);
 	}
 	
@@ -81,16 +90,16 @@ public class SCPSNode {
 	 * @param checkPoint
 	 */
 	public void addChild(SCPSNode node, int tid, int checkPoint) {
-		node.setParent(this);
+		node.parent = this;
 		
 		if(tid < checkPoint) {
 			// 在检查点之前
-			node.setPTC(node.getPTC() + 1);
+			node.preCount += 1;
 		} else {
 			// 在检查点之后
-			node.setCTC(node.getCTC() + 1);
+			node.curCount += 1;
 		}
-		node.setTailNode(true);
+		node.isTailNode = true;
 		this.children.add(node);
 	}
 	
@@ -98,98 +107,28 @@ public class SCPSNode {
 	 * 更新已有普通节点
 	 * @param node
 	 */
-	public void updateChild(int C) {
-		this.C += C;
+	public void updateChild(int count) {
+		this.count += count;
 	}
 	
 	/**
 	 * 更新已有尾节点
 	 * @param node
 	 */
-	public void updateChild(int C, int tid, int checkPoint) {
-		this.C += C;
+	public void updateChild(int count, int tid, int checkPoint) {
+		this.count += count;
 
 		if(tid < checkPoint) {
 			// 在检查点之前
-			this.PTC++;
+			this.preCount++;
 		} else {
-			this.CTC++;
+			this.curCount++;
 		}
-		this.setTailNode(true);
+		isTailNode = true;
 
 	}
-	
+
 	/******************** getters and setters **********************/
-	public int getPTC() {
-		return PTC;
-	}
 
-	public void setPTC(int pTC) {
-		PTC = pTC;
-	}
-
-	public int getCTC() {
-		return CTC;
-	}
-
-	public void setCTC(int cTC) {
-		CTC = cTC;
-	}
-
-	public int getC() {
-		return C;
-	}
-
-	public void setC(int c) {
-		C = c;
-	}
-
-	public String getN() {
-		return N;
-	}
-
-	public void setN(String n) {
-		N = n;
-	}
-
-	public SCPSNode getParent() {
-		return parent;
-	}
-
-	public void setParent(SCPSNode parent) {
-		this.parent = parent;
-	}
-
-	public LinkedList<SCPSNode> getChildren() {
-		return children;
-	}
-
-	public void setChildren(LinkedList<SCPSNode> children) {
-		this.children = children;
-	}
-
-	public boolean isTailNode() {
-		return isTailNode;
-	}
-
-	public void setTailNode(boolean isTailNode) {
-		this.isTailNode = isTailNode;
-	}
-
-//	public SCPSNode getNextHomonym() {
-//		return nextHomonym;
-//	}
-//
-//	public void setNextHomonym(SCPSNode nextHomonym) {
-//		this.nextHomonym = nextHomonym;
-//	}
-//
-//	public SCPSNode getLastHomonym() {
-//		return lastHomonym;
-//	}
-//
-//	public void setLastHomonym(SCPSNode lastHomonym) {
-//		this.lastHomonym = lastHomonym;
-//	}
 
 }
