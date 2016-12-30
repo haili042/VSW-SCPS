@@ -4,35 +4,34 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+
 public class SCPSNode {
 
-	int preCount = 0; // 检查点之前的计数 previous count
-	int curCount = 0; // 检查点之后的计数 current count
-	int count = 0; // 支持度计数 count
-	String item; // 项名
-	SCPSNode next = null;
+	public int preCount = 0; // 检查点之前的计数 previous count
+	public int curCount = 0; // 检查点之后的计数 current count
+	public int count = 0; // 支持度计数 count
+	public String item; // 项名
+	public SCPSNode next;
 
-	SCPSNode parent; // 父节点
-	LinkedList<SCPSNode> children = new LinkedList<>(); // 孩子节点
+	public SCPSNode parent; // 父节点
+	public LinkedList<SCPSNode> children = new LinkedList<>(); // 孩子节点
 //	SCPSNode nextHomonym = null; // 下一个同名兄弟节点
 //	SCPSNode lastHomonym = null; // 前一个同名兄弟节点
 	
-	boolean isTailNode; // 是否是尾节点
-	boolean isVirtual; // 是否是虚拟节点
-	boolean isRoot;
+	public boolean isTailNode; // 是否是尾节点
+	public boolean isVirtual; // 是否是虚拟节点
+	public boolean isRoot;
 	
-
 	public SCPSNode(String item) {
 		this.item = item;
 		this.count = 1;
-		this.isRoot = "root".equals(item);
+        this.isRoot = item.equals("root");
 	}
 	
 	public SCPSNode(String item, int count) {
 		this.item = item;
 		this.count = count;
-		this.isRoot = "root".equals(item);
-
+        this.isRoot = item.equals("root");
 	}
 
 	public SCPSNode getChild(String item) {
@@ -126,6 +125,23 @@ public class SCPSNode {
 		}
 		isTailNode = true;
 
+	}
+	
+	/**
+	 * 两个节点按照频繁降序比较大小
+	 * @param item
+	 * @return
+	 */
+	public int compareTo(SCPSNode node) {
+
+		// 初始也按照字典序排序
+		// 权值相同则按照字典序排序
+		if (this.count == node.count) {
+			return node.item.compareTo(this.item);
+		} else {
+			// 否则比较计数大小
+			return this.count - node.count;
+		}
 	}
 
 	/******************** getters and setters **********************/

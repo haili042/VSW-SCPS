@@ -37,10 +37,13 @@ public class SCPSTree {
 		
 		// 1 插入一批数据
 		for (Map<String, Object> transaction : pane) {
-			this.currentWindowSize++;
+			currentWindowSize++;
 			insertPath(transaction, checkPoint); // 排序好的事务插入到SCPS树中
 		}
-		ilist.addPane(pane); // 2 更新i-list
+		// 2 更新i-list
+		// 频繁升序排序，方便for循环遍历
+		ilist.addPane(pane);
+		
 		reconstruct(); // 根据最新I-list重构SCPS-tree
 	}
 	
@@ -64,8 +67,8 @@ public class SCPSTree {
 				if (child == null) {
 					SCPSNode node = new SCPSNode(item, lastC);
 					node.isTailNode = true;
-					node.preCount = (lastPTC);
-					node.curCount = (lastCTC);
+					node.preCount = lastPTC;
+					node.curCount = lastCTC;
 					node.isVirtual = isVirtual;
 					temp.addChild(node);
 					temp = node;
@@ -112,12 +115,13 @@ public class SCPSTree {
 		List<String> record = (List<String>) transaction.get("record");
 		
 		ilist.sortTransaction(record); // 根据i-list排序
-		 System.out.println("insert tid " + tid + " : " + record.toString());
+//		 System.out.println("insert tid " + tid + " : " + record.toString());
 		
 		for (int i = 0; i < record.size(); i++) {
 			String item = record.get(i);
 			SCPSNode child = temp.getChild(item);
 			
+			// 插入到树中
 			if (i == record.size() - 1) {
 				// 添加尾节点
 				if (child == null) {
@@ -195,8 +199,8 @@ public class SCPSTree {
 	 * 虚拟节点到以下所有的子树都是虚拟的
 	 */
 	public void reconstruct() {
-		
-		 print(root);
+//		System.out.println("reconstructing...");
+//		 print(root);
 	  	List<SCPSNode> tailNodes = new ArrayList<>();
         travelDFS(tailNodes, root, "tailNodes");
         
@@ -256,8 +260,8 @@ public class SCPSTree {
 			}
 			
 		}
-		System.out.println("after reconstruction...");
-		print(root);
+//		System.out.println("after reconstruction...");
+//		print(root);
 		System.out.println("current window size : " + getCurrentWindowSize() + "\n");
 
 	}

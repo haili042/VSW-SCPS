@@ -3,28 +3,26 @@ package com.haili.fp2;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.haili.scps.IlistItem;
+
 /**
  *
  * @author Kamran
  */
 public class FPtreeNode {
 
-    boolean root;
+    boolean isRoot;
     String item;
     List<FPtreeNode> children = new ArrayList<>();
     FPtreeNode parent;
-    FPtreeNode next;
+    FPtreeNode next = null;
     int count;
 
     public FPtreeNode(String item) {
         this.item = item;
-        this.next = null;
-        this.root = item.equals("root");
+        this.isRoot = item.equals("root");
     }
     
-    boolean isRoot(){
-        return root;
-    }
     
 	@Override
 	public String toString() {
@@ -40,5 +38,6 @@ public class FPtreeNode {
 		
 		return res;
 	}
+	
 
 }

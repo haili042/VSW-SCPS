@@ -8,9 +8,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+
 public class Ilist {
 	
-	private Map<String, IlistItem> ilistMap = new LinkedHashMap<>(); // i-list
+	private Map<String, SCPSNode> ilistMap = new LinkedHashMap<>(); // i-list
 	
 	public Ilist() {
 	}
@@ -49,7 +50,7 @@ public class Ilist {
 		}
 		String virtualItem = record.get(0);
 		for (String str : record) {
-			int v = this.getItem(str).getC();
+			int v = this.getItem(str).count;
 			if (v >= minSN) {
 				virtualItem = str;
 			} else {
@@ -68,15 +69,13 @@ public class Ilist {
 	public void addPane(List<Map<String, Object>> pane) {
 //		System.out.println("update i-list\nfrom : " + ilistMap.toString());
 		for (Map<String, Object> transaction : pane) {
-			int tid = (int) transaction.get("tid");
 			List<String> record = (List<String>) transaction.get("record");
 			
 			for (String str : record) {
 				if (ilistMap.get(str) == null) {
-					ilistMap.put(str, new IlistItem(str)); // 初始值为1
+					ilistMap.put(str, new SCPSNode(str)); // 初始值为1
 				} else {
-					ilistMap.get(str).updateC(1); // 支持数加一
-//					IList.put(str, IList.get(str) + 1);
+					ilistMap.get(str).count += 1; // 支持数加一
 				}
 			}
 		}
@@ -92,7 +91,7 @@ public class Ilist {
 	 * @param n 要更新的计数
 	 */
 	public void updateItem(String item, int n) {
-		getItem(item).updateC(n); // ilist 减去计数
+		getItem(item).count += n; // ilist 减去计数
 		
 		// 若计数为0则从ilist中删除该项
 //		if (getItem(item).getC() == 0) {
@@ -123,15 +122,16 @@ public class Ilist {
 	 * 利于for循环
 	 */
 	public void sort() {
-	    Map<String, IlistItem> sortedMap = new TreeMap<>(new Comparator<String>() {  
+	    Map<String, SCPSNode> sortedMap = new TreeMap<>(new Comparator<String>() {  
 	        public int compare(String key1, String key2) {  
-	        	IlistItem v1 = ilistMap.get(key1), v2 = ilistMap.get(key2);  
+	        	SCPSNode v1 = ilistMap.get(key1);
+	        	SCPSNode v2 = ilistMap.get(key2);  
 	        	
 	            return v1.compareTo(v2);  
 	        }});  
 	    sortedMap.putAll(ilistMap);
 	    
-	    Map<String, IlistItem> result = new LinkedHashMap<>();
+	    Map<String, SCPSNode> result = new LinkedHashMap<>();
 	    for (String key : sortedMap.keySet()) {
 	    	result.put(key, sortedMap.get(key));
 		}
@@ -142,7 +142,7 @@ public class Ilist {
 	 * 获取ilist
 	 * @return
 	 */
-	public Map<String, IlistItem> getIlistMap() {
+	public Map<String, SCPSNode> getIlistMap() {
 		return ilistMap;
 	}
 
@@ -152,8 +152,18 @@ public class Ilist {
 	 * @param key
 	 * @return
 	 */
-	public IlistItem getItem(String key) {
+	public SCPSNode getItem(String key) {
 		return ilistMap.get(key);
+	}
+	
+	
+	/**
+	 * 获取头表的项
+	 * @param key
+	 * @return
+	 */
+	public SCPSNode setItem(String key, SCPSNode node) {
+		return ilistMap.put(key, node);
 	}
 	
 	/**
@@ -162,17 +172,38 @@ public class Ilist {
 	 * @param node
 	 */
 	public void addItemBrother(String item, SCPSNode node) {
-		if (getItem(item) == null) {
-			ilistMap.put(item, new IlistItem(item));
-		}
-		getItem(item).getNextBrotherList().add(node);
+		SCPSNode head = getItem(item);
+		// 第一个节点为空节点， 保存支持度计数
+		if (head == null) {
+			head = new SCPSNode(item, 0);
+			ilistMap.put(item, head);
+		} 
+		
+		// 在前面插入该节点
+		node.next = head.next;
+		head.next = node;
+		
 	}
 	
 	/**
 	 * 删除同名兄弟节点
 	 */
 	public void removeItemBrother(String item, SCPSNode node) {
-		getItem(item).getNextBrotherList().remove(node);
+		SCPSNode last = getItem(item);
+		if (last == null) {
+			return;
+		}
+		SCPSNode cur = last.next;
+
+		while (cur != null) {
+			
+			if (cur.equals(node)) {
+				last.next = last.next.next;
+				break;
+			}
+			last = last.next;
+			cur = cur.next;
+		}
 	}
 	
 	/**

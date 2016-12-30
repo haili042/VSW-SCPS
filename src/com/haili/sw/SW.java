@@ -21,6 +21,7 @@ import java.util.Set;
 import com.haili.cofi.COFI;
 import com.haili.eclat.Eclat;
 import com.haili.eclat.ItemSet;
+import com.haili.fp2.FPGrowth;
 import com.haili.scps.SCPSTree;
 import com.haili.util.ConfigReader;
 
@@ -54,13 +55,13 @@ public class SW {
 	}
 	
 	public static void main(String[] args) {
-		int paneSize = 1;
-		SW vsw = new SW(paneSize * 2, paneSize, 0.2, 0.2);
+		int paneSize = 1000;
+		SW vsw = new SW(paneSize * 2, paneSize, 0.3, 0.2);
 		
 		long begin = System.currentTimeMillis();
 		
-//		vsw.runVSW("test3");
-		vsw.runSCPS("test");
+//		vsw.runVSW("mushroom");
+		vsw.runSCPS("mushroom");
 		
 		long end = System.currentTimeMillis();
 		System.out.println(String.format("cost : %dms", end - begin));
@@ -213,16 +214,17 @@ public class SW {
 					pane.clear(); // 重置pane
 					
 					// 窗口初始化时不进行挖掘
-					/*if (lineNum == initSize) {
-						COFI cofi = new COFI(T, minSup);
-						cofi.mine();
-						lastFPSet = cofi.getFP();
+					if (lineNum == initSize) {
+						int minSN = (int) Math.ceil(this.minSup * T.getCurrentWindowSize());
+						FPGrowth fpgrowth = new FPGrowth(T, minSup, minSN, dataset);
+						fpgrowth.mine();
+						lastFPSet = fpgrowth.getFP();
 						
 					} else if (lineNum > initSize) {
-
-						COFI cofi = new COFI(T, minSup);
-						cofi.mine();
-						Map<Set<String>, Integer> curFPSet = cofi.getFP();
+						int minSN = (int) Math.ceil(this.minSup * T.getCurrentWindowSize());
+						FPGrowth fpgrowth = new FPGrowth(T, minSup, minSN, dataset);
+						fpgrowth.mine();
+						Map<Set<String>, Integer> curFPSet = fpgrowth.getFP();
 						
 						// 检测到概念漂移的发生
 						if (isConceptChange(curFPSet)) {
@@ -236,7 +238,7 @@ public class SW {
 //							System.out.println(String.format("CP : %d, window size : %d", CP, T.getCurrentWindowSize()));
 							
 						} 
-					}*/
+					}
 					
 				}
 			}

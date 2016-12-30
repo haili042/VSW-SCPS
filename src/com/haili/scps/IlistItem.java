@@ -8,7 +8,7 @@ public class IlistItem {
 
 	private String N; // 名称
 	private int C; // 支持度计数
-	private List<SCPSNode> nextBrotherList = new LinkedList<>(); // 指向同名兄弟的指针
+	private SCPSNode next; // 指向同名兄弟的指针
 
 	public IlistItem(String N) {
 		this.N = N;
@@ -45,8 +45,8 @@ public class IlistItem {
 	 * 添加兄弟节点
 	 */
 	public void addBrother(SCPSNode node) {
-		if (!nextBrotherList.contains(node)) {
-			nextBrotherList.add(node);
+		if (!next.contains(node)) {
+			next.add(node);
 		}
 	}
 	
@@ -75,7 +75,7 @@ public class IlistItem {
 	}
 
 	public List<SCPSNode> getNextBrotherList() {
-		return nextBrotherList;
+		return next;
 	}
 
 }

@@ -15,6 +15,8 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 import com.haili.mine.MiningFP;
+import com.haili.scps.SCPSNode;
+import com.haili.scps.SCPSTree;
 import com.haili.sw.SW;
 
 public class FPGrowth implements MiningFP {
@@ -23,10 +25,26 @@ public class FPGrowth implements MiningFP {
 	private double minSup;
 	private int total = 0;
 
-	FPtreeNode fptree;
-	List<FPtreeNode> headerTable = new ArrayList<>(); // headertable 保存每个兄弟节点链表的起始点指针
+	SCPSNode fptree;
+	List<SCPSNode> headerTable = new ArrayList<>(); // headertable 保存每个兄弟节点链表的起始点指针
 	Map<Set<String>, Integer> FP = new HashMap<>(); // 频繁项集结果
 
+	public FPGrowth(SCPSTree tree, double minSup, int minSN, String dataset) throws FileNotFoundException {
+		this.minSup = minSup;
+		this.minSN = minSN;
+		fptree = tree.getRoot();
+		
+		for (String key : tree.getIlist().getIlistMap().keySet()) {
+			SCPSNode n = tree.getIlist().getIlistMap().get(key);
+			if (n.count > minSN) {
+				headerTable.add(n);
+			}
+		}
+		
+		fpgrowth(fptree, new HashSet<String>(), minSN, headerTable);
+//		SW.writeResult(FP, "fp2", dataset, minSup);
+	}
+	
 	public FPGrowth(File file, double minSup, String dataset) throws FileNotFoundException {
 		this.minSup = minSup;
 		init(file);
@@ -49,13 +67,13 @@ public class FPGrowth implements MiningFP {
 	 * @param conditional_headerTable
 	 * @return
 	 */
-	private FPtreeNode conditional_fptree_constructor(
+	private SCPSNode conditional_fptree_constructor(
 			Map<Set<String>, Integer> conditionalPatternBase,
 			Map<String, Integer> conditionalItemsMaptoFrequencies,
-			int threshold, List<FPtreeNode> conditional_headerTable) {
+			int threshold, List<SCPSNode> conditional_headerTable) {
 		// FPTree constructing
 		// the null node!
-		FPtreeNode conditional_fptree = new FPtreeNode("root");
+		SCPSNode conditional_fptree = new SCPSNode("root");
 		conditional_fptree.item = null;
 		// remember our transactions here has oredering and non-frequent items
 		// for condition items
@@ -188,12 +206,12 @@ public class FPGrowth implements MiningFP {
 		// HeaderTable Creation
 		// first elements use just as pointers
 		for (String itemsforTable : sortedItemsbyFrequencies) {
-			headerTable.add(new FPtreeNode(itemsforTable));
+			headerTable.add(new SCPSNode(itemsforTable));
 		}
 		// FPTree constructing
 		input = new Scanner(file);
 		// the null node!
-		fptree = new FPtreeNode("root"); // 创建根节点
+		fptree = new SCPSNode("root"); // 创建根节点
 		fptree.item = null;
 		// ordering frequent items transaction
 		while (input.hasNextLine()) {
@@ -228,9 +246,9 @@ public class FPGrowth implements MiningFP {
 		}
 		// headertable reverse ordering 
 		// first calculating item frequencies in tree 更新兄弟节点链表
-		for (FPtreeNode item : headerTable) {
+		for (SCPSNode item : headerTable) {
 			int count = 0;
-			FPtreeNode itemtemp = item;
+			SCPSNode itemtemp = item;
 			while (itemtemp.next != null) {
 				itemtemp = itemtemp.next;
 				count += itemtemp.count;
@@ -248,15 +266,15 @@ public class FPGrowth implements MiningFP {
 	 * @param fptree
 	 * @param headerTable
 	 */
-	void insert(List<String> sortedTransaction, FPtreeNode fptree,
-			List<FPtreeNode> headerTable) {
+	void insert(List<String> sortedTransaction, SCPSNode fptree,
+			List<SCPSNode> headerTable) {
 		if (sortedTransaction.isEmpty()) {
 			return;
 		}
 		String itemtoAddtotree = sortedTransaction.get(0);
-		FPtreeNode newNode = null;
+		SCPSNode newNode = null;
 		boolean ifisdone = false; 
-		for (FPtreeNode child : fptree.children) {
+		for (SCPSNode child : fptree.children) {
 			if (child.item.equals(itemtoAddtotree)) {
 				newNode = child;
 				child.count++;
@@ -265,11 +283,11 @@ public class FPGrowth implements MiningFP {
 			}
 		}
 		if (!ifisdone) {
-			newNode = new FPtreeNode(itemtoAddtotree);
+			newNode = new SCPSNode(itemtoAddtotree);
 			newNode.count = 1;
 			newNode.parent = fptree;
 			fptree.children.add(newNode);
-			for (FPtreeNode headerPointer : headerTable) {
+			for (SCPSNode headerPointer : headerTable) {
 				if (headerPointer.item.equals(itemtoAddtotree)) {
 					while (headerPointer.next != null) {
 						headerPointer = headerPointer.next;
@@ -291,9 +309,9 @@ public class FPGrowth implements MiningFP {
 	 * @param headerTable
 	 * @param fp
 	 */
-	public void fpgrowth(FPtreeNode fptree, Set<String> base, int threshold,
-			List<FPtreeNode> headerTable) {
-		for (FPtreeNode iteminTree : headerTable) {
+	public void fpgrowth(SCPSNode fptree, Set<String> base, int threshold,
+			List<SCPSNode> headerTable) {
+		for (SCPSNode iteminTree : headerTable) {
 			
 			Set<String> currentPattern = new HashSet<>();
 			currentPattern.addAll(base);
@@ -307,9 +325,9 @@ public class FPGrowth implements MiningFP {
 				iteminTree = iteminTree.next;
 				supportofCurrentPattern += iteminTree.count;
 				Set<String> conditionalPattern = new HashSet<>();
-				FPtreeNode conditionalItem = iteminTree.parent;
+				SCPSNode conditionalItem = iteminTree.parent;
 
-				while (!conditionalItem.isRoot()) {
+				while (!conditionalItem.isRoot) {
 					conditionalPattern.add(conditionalItem.item);
 					conditionalItem = conditionalItem.parent;
 				}
@@ -342,17 +360,17 @@ public class FPGrowth implements MiningFP {
 			// HeaderTable Creation
 			// first elements are being used just as pointers
 			// non conditional frequents also will be removed
-			List<FPtreeNode> conditional_headerTable = new ArrayList<>();
+			List<SCPSNode> conditional_headerTable = new ArrayList<>();
 			for (String itemsforTable : conditionalItemsMaptoFrequencies.keySet()) {
 				int count = conditionalItemsMaptoFrequencies.get(itemsforTable);
 				if (count < threshold) {
 					continue;
 				}
-				FPtreeNode f = new FPtreeNode(itemsforTable);
+				SCPSNode f = new SCPSNode(itemsforTable);
 				f.count = count;
 				conditional_headerTable.add(f);
 			}
-			FPtreeNode conditional_fptree = conditional_fptree_constructor(
+			SCPSNode conditional_fptree = conditional_fptree_constructor(
 					conditionalPatternBase, conditionalItemsMaptoFrequencies,
 					threshold, conditional_headerTable);
 			// headertable reverse ordering
@@ -374,14 +392,14 @@ public class FPGrowth implements MiningFP {
 	 * @param conditional_headerTable
 	 */
 	private void insert(List<String> patternList, int count_of_pattern,
-			FPtreeNode conditional_fptree, List<FPtreeNode> conditional_headerTable) {
+			SCPSNode conditional_fptree, List<SCPSNode> conditional_headerTable) {
 		if (patternList.isEmpty()) {
 			return;
 		}
 		String itemtoAddtotree = patternList.get(0);
-		FPtreeNode newNode = null;
+		SCPSNode newNode = null;
 		boolean ifisdone = false;
-		for (FPtreeNode child : conditional_fptree.children) {
+		for (SCPSNode child : conditional_fptree.children) {
 			if (child.item.equals(itemtoAddtotree)) {
 				newNode = child;
 				child.count += count_of_pattern;
@@ -390,10 +408,10 @@ public class FPGrowth implements MiningFP {
 			}
 		}
 		if (!ifisdone) {
-			for (FPtreeNode headerPointer : conditional_headerTable) {
+			for (SCPSNode headerPointer : conditional_headerTable) {
 				// this if also gurantees removing og non frequets
 				if (headerPointer.item.equals(itemtoAddtotree)) {
-					newNode = new FPtreeNode(itemtoAddtotree);
+					newNode = new SCPSNode(itemtoAddtotree);
 					newNode.count = count_of_pattern;
 					newNode.parent = conditional_fptree;
 					conditional_fptree.children.add(newNode);
@@ -410,15 +428,21 @@ public class FPGrowth implements MiningFP {
 	}
 
 
-	public static void main(String[] args) throws FileNotFoundException {
-		String file = "dataset\\statical\\";
-		String dataset = "test";
-		file += dataset + ".dat";
-		
-		long start = System.currentTimeMillis();
-		new FPGrowth(new File(file), 0.3, dataset);
-		System.out.println("cost : " + (System.currentTimeMillis() - start) + "ms");
+	@Override
+	public Map<Set<String>, Integer> getFP() {
+		return this.FP;
 	}
+
+
+//	public static void main(String[] args) throws FileNotFoundException {
+//		String file = "dataset\\statical\\";
+//		String dataset = "test";
+//		file += dataset + ".dat";
+//		
+//		long start = System.currentTimeMillis();
+//		new FPGrowth(new File(file), 0.3, dataset);
+//		System.out.println("cost : " + (System.currentTimeMillis() - start) + "ms");
+//	}
 
 
 }
@@ -429,9 +453,9 @@ public class FPGrowth implements MiningFP {
  * @author Administrator
  * 
  */
-class sortInFrequency implements Comparator<FPtreeNode> {
+class sortInFrequency implements Comparator<SCPSNode> {
 
-	public int compare(FPtreeNode o1, FPtreeNode o2) {
+	public int compare(SCPSNode o1, SCPSNode o2) {
 		if (o1.count > o2.count) {
 			return 1;
 		} else if (o1.count < o2.count) {
