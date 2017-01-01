@@ -1,0 +1,17 @@
+d : 5
+d c a : 3
+c a : 6
+b : 5
+c : 6
+a : 8
+b c a : 3
+b d c a : 2
+b d c : 2
+b c : 3
+b d : 4
+d c : 3
+b d a : 3
+null : 0
+d a : 4
+b a : 4
+total : 16

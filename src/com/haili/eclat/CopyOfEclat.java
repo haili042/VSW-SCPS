@@ -26,10 +26,10 @@ import java.util.TreeSet;
 public class CopyOfEclat {
 
 	private String srcPath = "dataset/statical/test.dat";
-	private String destPath = "result/vsw";
+	private String destPath = "result/eclat";
 	private File file = new File(srcPath);
 
-	private double minSup = 0.3;
+	private double minSup;
 	private int transNum = 0;
 	private ArrayList<HeadNode> array = new ArrayList<HeadNode>();
 	private HashHeadNode[] hashTable;// 存放临时生成的频繁项集，作为重复查询的备选集合
@@ -106,7 +106,7 @@ public class CopyOfEclat {
 			// System.out.println("itemsize:"+itemSet.size());
 			// System.out.println("trans: "+transNum);
 			// ItemSet.limitSupport=(int)Math.ceil(transNum*limitValue);//上取整
-			ItemSet.minSN = (int) Math.floor(transNum * minSup);// 下取整
+			ItemSet.minSN = (int) Math.ceil(transNum * minSup);// 下取整
 			ItemSet.ItemSize = keyMap.size();
 			ItemSet.TransSize = transNum;
 			hashTable = new HashHeadNode[ItemSet.ItemSize * 3];// 生成项集hash表
@@ -117,7 +117,7 @@ public class CopyOfEclat {
 			// System.out.println("limitSupport:"+ItemSet.limitSupport);
 
             SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd hhmmss");
-            String time = "(" + sdf.format(new Date()) + ")";
+            String time = "[" + minSup + "](" + sdf.format(new Date()) + ")";
             File dir = new File(destPath);
             if (!dir.exists()) {
                 dir.mkdir();
@@ -441,7 +441,7 @@ public class CopyOfEclat {
 	
 	
 	public static void main(String[] args) {
-		CopyOfEclat e = new CopyOfEclat(0.3);
+		CopyOfEclat e = new CopyOfEclat(0.2);
 		long begin = System.currentTimeMillis();
 		e.init();
 		e.start();

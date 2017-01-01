@@ -26,6 +26,7 @@ public class FPGrowth {
     private int minSN;
     private double minSup;
     private int total = 0;
+    String dataset;
     
     //fp-tree constructing fileds
     Vector<FPtree> headerTable;
@@ -33,9 +34,11 @@ public class FPGrowth {
     //fp-growth
     Map<String, Integer> frequentPatterns;
 
-    public FPGrowth(File file, int minSN) throws FileNotFoundException {
-        this.minSN = minSN;
+    public FPGrowth(File file, double minSup, String dataset) throws FileNotFoundException {
+    	this.minSup = minSup;
+    	this.dataset = dataset;
         fptree(file);
+        this.minSN = (int) Math.ceil(total * minSup);
         fpgrowth(fptree, minSN, headerTable);
         print();
 
@@ -78,31 +81,22 @@ public class FPGrowth {
     }
 
     private void preProcessing(File file, Map<String, Integer> itemsMaptoFrequencies, Scanner input, List<String> sortedItemsbyFrequencies, Vector<String> itemstoRemove) throws FileNotFoundException {
-        while (input.hasNext()) {
-            String temp = input.next();
-            if (itemsMaptoFrequencies.containsKey(temp)) {
-                int count = itemsMaptoFrequencies.get(temp);
-                itemsMaptoFrequencies.put(temp, count + 1);
-            } else {
-                itemsMaptoFrequencies.put(temp, 1);
-            }
-        }
         
         // first scan database
-//        while (input.hasNextLine()) {
-//            String line = input.nextLine();
-//            StringTokenizer tokenizer = new StringTokenizer(line);
-//            total++;
-//            while (tokenizer.hasMoreTokens()) {
-//                String temp = tokenizer.nextToken();
-//                if (itemsMaptoFrequencies.containsKey(temp)) {
-//                    int count = itemsMaptoFrequencies.get(temp);
-//                    itemsMaptoFrequencies.put(temp, count + 1);
-//                } else {
-//                    itemsMaptoFrequencies.put(temp, 1);
-//                }
-//            }
-//        }        
+        while (input.hasNextLine()) {
+            String line = input.nextLine();
+            StringTokenizer tokenizer = new StringTokenizer(line);
+            total++;
+            while (tokenizer.hasMoreTokens()) {
+                String temp = tokenizer.nextToken();
+                if (itemsMaptoFrequencies.containsKey(temp)) {
+                    int count = itemsMaptoFrequencies.get(temp);
+                    itemsMaptoFrequencies.put(temp, count + 1);
+                } else {
+                    itemsMaptoFrequencies.put(temp, 1);
+                }
+            }
+        }        
         input.close();
         //orderiiiiiiiiiiiiiiiiiiiiiiiiiiiing
         //also elimating non-frequents
@@ -364,7 +358,7 @@ public class FPGrowth {
 		String outputPath = "result\\fp2_original\\";
 		SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd hhmmss");
 		
-		String tempFileName = String.format("%s[%1.3f](%s).dat", "mushroom", minSup, sdf.format(new Date()));
+		String tempFileName = String.format("%s[%1.3f](%s).dat", dataset, minSup, sdf.format(new Date()));
 		String tempFilePath = outputPath + tempFileName;
 		
 		// create dir
@@ -403,11 +397,11 @@ public class FPGrowth {
     
 
     public static void main(String[] args) throws FileNotFoundException {
-    	int threshold = 2031; // 0.25
-    	String file = "dataset\\statical\\mushroom.dat";
+    	String dataset = "test";
+    	String file = "dataset\\statical\\" + dataset + ".dat";
     	
         long start = System.currentTimeMillis();
-        new FPGrowth(new File(file), threshold);
+        new FPGrowth(new File(file), 0.3, dataset);
         System.out.println("cost : " + (System.currentTimeMillis() - start) + "ms");
     }
 }

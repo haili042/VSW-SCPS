@@ -19,7 +19,6 @@ public class SCPSNode {
 //	SCPSNode lastHomonym = null; // 前一个同名兄弟节点
 	
 	public boolean isTailNode; // 是否是尾节点
-	public boolean isVirtual; // 是否是虚拟节点
 	public boolean isRoot;
 	
 	public SCPSNode(String item) {
@@ -50,11 +49,6 @@ public class SCPSNode {
 		String bracketL = "[";
 		String bracketR = "]";
 		
-		if (isVirtual) {
-			bracketL = "<";
-			bracketR = ">";
-		}
-
 		if (item.equals("root")) {
 			res = String.format(bracketL + "======root=====" + bracketR);
 		} else if (isTailNode) {
@@ -91,7 +85,7 @@ public class SCPSNode {
 	public void addChild(SCPSNode node, int tid, int checkPoint) {
 		node.parent = this;
 		
-		if(tid < checkPoint) {
+		if(tid <= checkPoint) {
 			// 在检查点之前
 			node.preCount += 1;
 		} else {
@@ -117,7 +111,7 @@ public class SCPSNode {
 	public void updateChild(int count, int tid, int checkPoint) {
 		this.count += count;
 
-		if(tid < checkPoint) {
+		if(tid <= checkPoint) {
 			// 在检查点之前
 			this.preCount++;
 		} else {

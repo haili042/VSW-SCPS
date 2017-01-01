@@ -40,26 +40,6 @@ public class Ilist {
 		});
 	}
 	
-	/**
-	 * 找出虚拟节点（有序事务中最后一个大于最小支持数的项）
-	 * @return
-	 */
-	public String getVirtualItem(List<String> record, int minSN) {
-		if (record.size() <= 0) {
-			return null;
-		}
-		String virtualItem = record.get(0);
-		for (String str : record) {
-			int v = this.getItem(str).count;
-			if (v >= minSN) {
-				virtualItem = str;
-			} else {
-				break;
-			}
-		}
-		
-		return virtualItem;
-	}
 	
 	
 	/**

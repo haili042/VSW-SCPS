@@ -56,12 +56,13 @@ public class SW {
 	
 	public static void main(String[] args) {
 		int paneSize = 1000;
-		SW vsw = new SW(paneSize * 2, paneSize, 0.3, 0.2);
+		SW vsw = new SW(paneSize * 2, paneSize, 0.2, 0.015);
 		
 		long begin = System.currentTimeMillis();
 		
-//		vsw.runVSW("mushroom");
-		vsw.runSCPS("mushroom");
+		vsw.runVSW("mushroom");
+//		vsw.runSCPS("mushroom");
+//		vsw.runSCPS("mushroom");
 		
 		long end = System.currentTimeMillis();
 		System.out.println(String.format("cost : %dms", end - begin));
@@ -170,6 +171,7 @@ public class SW {
 			e.printStackTrace();
 		}
 		System.out.println();
+		SW.writeResult(lastFPSet, "vsw", dataset, minSup);
 	}
 	
 	public void runSCPS(String dataset) {
@@ -194,7 +196,7 @@ public class SW {
 				
 				if (line.trim() != "") {
 					Map<String, Object> transaction = new HashMap<>();
-					transaction.put("tid", lineNum); // 添加行号
+					transaction.put("tid", ++lineNum); // 添加行号
 					List<String> record = new ArrayList<String>();
 					
 					String[] items = line.split(spliter);
@@ -204,8 +206,6 @@ public class SW {
 					transaction.put("record", record);
 					pane.add(transaction);
 				}
-				
-				++lineNum;
 				
 				// 开始一些列操作
 				if (lineNum % paneSize == 0) {

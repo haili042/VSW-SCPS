@@ -84,7 +84,7 @@ public class Eclat implements MiningFP {
 
 		// ItemSet.limitSupport=(int)Math.ceil(transNum*limitValue);//上取整
 
-		ItemSet.minSN = (int) Math.floor(dataList.size() * minSup);// 下取整
+		ItemSet.minSN = (int) Math.ceil(dataList.size() * minSup);// 下取整
 		ItemSet.ItemSize = keyMap.size();
 		ItemSet.TransSize = dataList.size();
 		hashTable = new HashHeadNode[ItemSet.ItemSize * 3];// 生成项集hash表
