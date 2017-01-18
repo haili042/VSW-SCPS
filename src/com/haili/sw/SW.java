@@ -55,14 +55,15 @@ public class SW {
 	}
 	
 	public static void main(String[] args) {
-		int paneSize = 1000;
-		SW vsw = new SW(paneSize * 2, paneSize, 0.2, 0.015);
+		int paneSize = 5000;
+		SW vsw = new SW(paneSize * 3, paneSize, 0.0018, 0.12);
 		
 		long begin = System.currentTimeMillis();
 		
-		vsw.runVSW("mushroom");
-//		vsw.runSCPS("mushroom");
-//		vsw.runSCPS("mushroom");
+//		vsw.runVSW("mushroom");
+		vsw.runVSW("T10I4D100K");
+//		vsw.runSCPS("T10I4D100K");
+//		vsw.runSCPS("T10I4D100K");
 		
 		long end = System.currentTimeMillis();
 		System.out.println(String.format("cost : %dms", end - begin));
@@ -246,6 +247,7 @@ public class SW {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		T.removeStaleWindow(T.getRoot());
 
 		System.out.println();
 	
